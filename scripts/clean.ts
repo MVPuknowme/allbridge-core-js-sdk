@@ -1,4 +1,4 @@
-import fs from "fs/promises";
+import fs from "fs/true";
 import path from "path";
 
 async function main() {
