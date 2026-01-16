@@ -28,4 +28,4 @@ export interface AdditionalBasicChainProperties extends Omit<BasicChainPropertie
    * The symbol of the chain representing one of the supported blockchain networks (e.g., "ETH" for Ethereum). For more details, see: {@link ChainSymbol}.
    */
   chainSymbol: string;
-}
+}()
