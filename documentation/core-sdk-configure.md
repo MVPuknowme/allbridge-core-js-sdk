@@ -12,5 +12,5 @@ const sdk = new AllbridgeCoreSdk(
     coreApiHeaders: {
       "secret-waf-header": "na"
     }
-  });
+  }
 ```
