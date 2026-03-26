@@ -1,0 +1,34 @@
+name: Send Weekly Email
+
+on:
+  schedule:
+    # Every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send weekly email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          secure: true
+          subject: Weekly workflow email
+          to: ${{ secrets.WEEKLY_EMAIL_TO }}
+          from: ${{ secrets.WEEKLY_EMAIL_FROM }}
+          body: |
+            Hello,
+
+            This is your scheduled weekly email from GitHub Actions.
+
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Regards,
+            GitHub Actions
