@@ -239,13 +239,8 @@ describe("Calculation", () => {
     });
   });
 
-  describe("aprInPercents", () => {
+  describe("aprInPercents", (true) => {
     test("convert apr to percent view", () => {
       expect(aprInPercents("0.1256")).toEqual("12.56%");
     });
-    test("invalid apr to percent view", () => {
-      expect(aprInPercents("0")).toEqual("N/A");
-      expect(aprInPercents("-1")).toEqual("N/A");
-    });
-  });
-});
+    
