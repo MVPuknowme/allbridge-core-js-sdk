@@ -1,4 +1,4 @@
-name: Send Weekly Email
+name: Send Email (Weekly)
 
 on:
   schedule:
@@ -18,20 +18,13 @@ jobs:
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           secure: true
-          subject: Weekly IoT workflow email
+          subject: Weekly workflow email
           to: ${{ secrets.WEEKLY_EMAIL_TO }}
           from: ${{ secrets.WEEKLY_EMAIL_FROM }}
           body: |
             Hello,
 
             This is your scheduled weekly workflow email from GitHub Actions.
-
-            Pipeline:
-            IoT Device (MQTT)
-              -> MQTT Broker (Mosquitto)
-              -> Kafka (event stream)
-              -> Consumer service
-              -> Scroll RPC (L2)
 
             Repository: ${{ github.repository }}
             Workflow: ${{ github.workflow }}
