@@ -1,404 +1,29 @@
 // @ts-nocheck
-import { String } from "../../_dependencies/source/0x1/ascii/structs";
+import { bcs } from "@mysten/sui/bcs";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64, fromHex, toHex } from "@mysten/sui/utils";
+import { String } from "../../_dependencies/std/ascii/structs";
+import { getTypeOrigin } from "../../_envs";
 import {
-  PhantomReified,
-  Reified,
-  StructClass,
-  ToField,
-  ToTypeStr,
   decodeFromFields,
   decodeFromFieldsWithTypes,
   decodeFromJSONField,
   phantom,
+  PhantomReified,
+  Reified,
+  StructClass,
+  ToField,
+  ToJSON,
+  ToTypeStr,
 } from "../../_framework/reified";
-import { FieldsWithTypes, composeSuiType, compressSuiType } from "../../_framework/util";
-import { PKG_V1 } from "../index";
-import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64, fromHEX, toHEX } from "@mysten/sui/utils";
-
-/* ============================== ReceiveFeeEvent =============================== */
-
-export function isReceiveFeeEvent(type: string): boolean {
-  type = compressSuiType(type);
-  return type === `${PKG_V1}::events::ReceiveFeeEvent`;
-}
-
-export interface ReceiveFeeEventFields {
-  userPaySui: ToField<"u64">;
-  userPayStable: ToField<"u64">;
-  totalPaySui: ToField<"u64">;
-  totalFeeSui: ToField<"u64">;
-}
-
-export type ReceiveFeeEventReified = Reified<ReceiveFeeEvent, ReceiveFeeEventFields>;
-
-export class ReceiveFeeEvent implements StructClass {
-  __StructClass = true as const;
-
-  static get $typeName() {
-    return `${PKG_V1}::events::ReceiveFeeEvent`;
-  }
-  static readonly $numTypeParams = 0;
-  static readonly $isPhantom = [] as const;
-
-  readonly $typeName = ReceiveFeeEvent.$typeName;
-  readonly $fullTypeName: string;
-  readonly $typeArgs: [];
-  readonly $isPhantom = ReceiveFeeEvent.$isPhantom;
-
-  readonly userPaySui: ToField<"u64">;
-  readonly userPayStable: ToField<"u64">;
-  readonly totalPaySui: ToField<"u64">;
-  readonly totalFeeSui: ToField<"u64">;
-
-  private constructor(typeArgs: [], fields: ReceiveFeeEventFields) {
-    this.$fullTypeName = composeSuiType(ReceiveFeeEvent.$typeName, ...typeArgs) as string;
-    this.$typeArgs = typeArgs;
-
-    this.userPaySui = fields.userPaySui;
-    this.userPayStable = fields.userPayStable;
-    this.totalPaySui = fields.totalPaySui;
-    this.totalFeeSui = fields.totalFeeSui;
-  }
-
-  static reified(): ReceiveFeeEventReified {
-    return {
-      typeName: ReceiveFeeEvent.$typeName,
-      fullTypeName: composeSuiType(ReceiveFeeEvent.$typeName, ...[]) as string,
-      typeArgs: [] as [],
-      isPhantom: ReceiveFeeEvent.$isPhantom,
-      reifiedTypeArgs: [],
-      fromFields: (fields: Record<string, any>) => ReceiveFeeEvent.fromFields(fields),
-      fromFieldsWithTypes: (item: FieldsWithTypes) => ReceiveFeeEvent.fromFieldsWithTypes(item),
-      fromBcs: (data: Uint8Array) => ReceiveFeeEvent.fromBcs(data),
-      bcs: ReceiveFeeEvent.bcs,
-      fromJSONField: (field: any) => ReceiveFeeEvent.fromJSONField(field),
-      fromJSON: (json: Record<string, any>) => ReceiveFeeEvent.fromJSON(json),
-      fromSuiParsedData: (content: SuiParsedData) => ReceiveFeeEvent.fromSuiParsedData(content),
-      fromSuiObjectData: (content: SuiObjectData) => ReceiveFeeEvent.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) => ReceiveFeeEvent.fetch(client, id),
-      new: (fields: ReceiveFeeEventFields) => {
-        return new ReceiveFeeEvent([], fields);
-      },
-      kind: "StructClassReified",
-    };
-  }
-
-  static get r() {
-    return ReceiveFeeEvent.reified();
-  }
-
-  static phantom(): PhantomReified<ToTypeStr<ReceiveFeeEvent>> {
-    return phantom(ReceiveFeeEvent.reified());
-  }
-  static get p() {
-    return ReceiveFeeEvent.phantom();
-  }
-
-  static get bcs() {
-    return bcs.struct("ReceiveFeeEvent", {
-      user_pay_sui: bcs.u64(),
-      user_pay_stable: bcs.u64(),
-      total_pay_sui: bcs.u64(),
-      total_fee_sui: bcs.u64(),
-    });
-  }
-
-  static fromFields(fields: Record<string, any>): ReceiveFeeEvent {
-    return ReceiveFeeEvent.reified().new({
-      userPaySui: decodeFromFields("u64", fields.user_pay_sui),
-      userPayStable: decodeFromFields("u64", fields.user_pay_stable),
-      totalPaySui: decodeFromFields("u64", fields.total_pay_sui),
-      totalFeeSui: decodeFromFields("u64", fields.total_fee_sui),
-    });
-  }
-
-  static fromFieldsWithTypes(item: FieldsWithTypes): ReceiveFeeEvent {
-    if (!isReceiveFeeEvent(item.type)) {
-      throw new Error("not a ReceiveFeeEvent type");
-    }
-
-    return ReceiveFeeEvent.reified().new({
-      userPaySui: decodeFromFieldsWithTypes("u64", item.fields.user_pay_sui),
-      userPayStable: decodeFromFieldsWithTypes("u64", item.fields.user_pay_stable),
-      totalPaySui: decodeFromFieldsWithTypes("u64", item.fields.total_pay_sui),
-      totalFeeSui: decodeFromFieldsWithTypes("u64", item.fields.total_fee_sui),
-    });
-  }
-
-  static fromBcs(data: Uint8Array): ReceiveFeeEvent {
-    return ReceiveFeeEvent.fromFields(ReceiveFeeEvent.bcs.parse(data));
-  }
-
-  toJSONField() {
-    return {
-      userPaySui: this.userPaySui.toString(),
-      userPayStable: this.userPayStable.toString(),
-      totalPaySui: this.totalPaySui.toString(),
-      totalFeeSui: this.totalFeeSui.toString(),
-    };
-  }
-
-  toJSON() {
-    return {
-      $typeName: this.$typeName,
-      $typeArgs: this.$typeArgs,
-      ...this.toJSONField(),
-    };
-  }
-
-  static fromJSONField(field: any): ReceiveFeeEvent {
-    return ReceiveFeeEvent.reified().new({
-      userPaySui: decodeFromJSONField("u64", field.userPaySui),
-      userPayStable: decodeFromJSONField("u64", field.userPayStable),
-      totalPaySui: decodeFromJSONField("u64", field.totalPaySui),
-      totalFeeSui: decodeFromJSONField("u64", field.totalFeeSui),
-    });
-  }
-
-  static fromJSON(json: Record<string, any>): ReceiveFeeEvent {
-    if (json.$typeName !== ReceiveFeeEvent.$typeName) {
-      throw new Error("not a WithTwoGenerics json object");
-    }
-
-    return ReceiveFeeEvent.fromJSONField(json);
-  }
-
-  static fromSuiParsedData(content: SuiParsedData): ReceiveFeeEvent {
-    if (content.dataType !== "moveObject") {
-      throw new Error("not an object");
-    }
-    if (!isReceiveFeeEvent(content.type)) {
-      throw new Error(`object at ${(content.fields as any).id} is not a ReceiveFeeEvent object`);
-    }
-    return ReceiveFeeEvent.fromFieldsWithTypes(content);
-  }
-
-  static fromSuiObjectData(data: SuiObjectData): ReceiveFeeEvent {
-    if (data.bcs) {
-      if (data.bcs.dataType !== "moveObject" || !isReceiveFeeEvent(data.bcs.type)) {
-        throw new Error(`object at is not a ReceiveFeeEvent object`);
-      }
-
-      return ReceiveFeeEvent.fromBcs(fromB64(data.bcs.bcsBytes));
-    }
-    if (data.content) {
-      return ReceiveFeeEvent.fromSuiParsedData(data.content);
-    }
-    throw new Error(
-      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
-    );
-  }
-
-  static async fetch(client: SuiClient, id: string): Promise<ReceiveFeeEvent> {
-    const res = await client.getObject({ id, options: { showBcs: true } });
-    if (res.error) {
-      throw new Error(`error fetching ReceiveFeeEvent object at id ${id}: ${res.error.code}`);
-    }
-    if (res.data?.bcs?.dataType !== "moveObject" || !isReceiveFeeEvent(res.data.bcs.type)) {
-      throw new Error(`object at id ${id} is not a ReceiveFeeEvent object`);
-    }
-
-    return ReceiveFeeEvent.fromSuiObjectData(res.data);
-  }
-}
-
-/* ============================== TokensReceivedEvent =============================== */
-
-export function isTokensReceivedEvent(type: string): boolean {
-  type = compressSuiType(type);
-  return type === `${PKG_V1}::events::TokensReceivedEvent`;
-}
-
-export interface TokensReceivedEventFields {
-  token: ToField<String>;
-  message: ToField<String>;
-  recipient: ToField<"address">;
-  extraGasValue: ToField<"u64">;
-}
-
-export type TokensReceivedEventReified = Reified<TokensReceivedEvent, TokensReceivedEventFields>;
-
-export class TokensReceivedEvent implements StructClass {
-  __StructClass = true as const;
-
-  static get $typeName() {
-    return `${PKG_V1}::events::TokensReceivedEvent`;
-  }
-  static readonly $numTypeParams = 0;
-  static readonly $isPhantom = [] as const;
-
-  readonly $typeName = TokensReceivedEvent.$typeName;
-  readonly $fullTypeName: string;
-  readonly $typeArgs: [];
-  readonly $isPhantom = TokensReceivedEvent.$isPhantom;
-
-  readonly token: ToField<String>;
-  readonly message: ToField<String>;
-  readonly recipient: ToField<"address">;
-  readonly extraGasValue: ToField<"u64">;
-
-  private constructor(typeArgs: [], fields: TokensReceivedEventFields) {
-    this.$fullTypeName = composeSuiType(TokensReceivedEvent.$typeName, ...typeArgs) as string;
-    this.$typeArgs = typeArgs;
-
-    this.token = fields.token;
-    this.message = fields.message;
-    this.recipient = fields.recipient;
-    this.extraGasValue = fields.extraGasValue;
-  }
-
-  static reified(): TokensReceivedEventReified {
-    return {
-      typeName: TokensReceivedEvent.$typeName,
-      fullTypeName: composeSuiType(TokensReceivedEvent.$typeName, ...[]) as string,
-      typeArgs: [] as [],
-      isPhantom: TokensReceivedEvent.$isPhantom,
-      reifiedTypeArgs: [],
-      fromFields: (fields: Record<string, any>) => TokensReceivedEvent.fromFields(fields),
-      fromFieldsWithTypes: (item: FieldsWithTypes) => TokensReceivedEvent.fromFieldsWithTypes(item),
-      fromBcs: (data: Uint8Array) => TokensReceivedEvent.fromBcs(data),
-      bcs: TokensReceivedEvent.bcs,
-      fromJSONField: (field: any) => TokensReceivedEvent.fromJSONField(field),
-      fromJSON: (json: Record<string, any>) => TokensReceivedEvent.fromJSON(json),
-      fromSuiParsedData: (content: SuiParsedData) => TokensReceivedEvent.fromSuiParsedData(content),
-      fromSuiObjectData: (content: SuiObjectData) => TokensReceivedEvent.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) => TokensReceivedEvent.fetch(client, id),
-      new: (fields: TokensReceivedEventFields) => {
-        return new TokensReceivedEvent([], fields);
-      },
-      kind: "StructClassReified",
-    };
-  }
-
-  static get r() {
-    return TokensReceivedEvent.reified();
-  }
-
-  static phantom(): PhantomReified<ToTypeStr<TokensReceivedEvent>> {
-    return phantom(TokensReceivedEvent.reified());
-  }
-  static get p() {
-    return TokensReceivedEvent.phantom();
-  }
-
-  static get bcs() {
-    return bcs.struct("TokensReceivedEvent", {
-      token: String.bcs,
-      message: String.bcs,
-      recipient: bcs.bytes(32).transform({
-        input: (val: string) => fromHEX(val),
-        output: (val: Uint8Array) => toHEX(val),
-      }),
-      extra_gas_value: bcs.u64(),
-    });
-  }
-
-  static fromFields(fields: Record<string, any>): TokensReceivedEvent {
-    return TokensReceivedEvent.reified().new({
-      token: decodeFromFields(String.reified(), fields.token),
-      message: decodeFromFields(String.reified(), fields.message),
-      recipient: decodeFromFields("address", fields.recipient),
-      extraGasValue: decodeFromFields("u64", fields.extra_gas_value),
-    });
-  }
-
-  static fromFieldsWithTypes(item: FieldsWithTypes): TokensReceivedEvent {
-    if (!isTokensReceivedEvent(item.type)) {
-      throw new Error("not a TokensReceivedEvent type");
-    }
-
-    return TokensReceivedEvent.reified().new({
-      token: decodeFromFieldsWithTypes(String.reified(), item.fields.token),
-      message: decodeFromFieldsWithTypes(String.reified(), item.fields.message),
-      recipient: decodeFromFieldsWithTypes("address", item.fields.recipient),
-      extraGasValue: decodeFromFieldsWithTypes("u64", item.fields.extra_gas_value),
-    });
-  }
-
-  static fromBcs(data: Uint8Array): TokensReceivedEvent {
-    return TokensReceivedEvent.fromFields(TokensReceivedEvent.bcs.parse(data));
-  }
-
-  toJSONField() {
-    return {
-      token: this.token,
-      message: this.message,
-      recipient: this.recipient,
-      extraGasValue: this.extraGasValue.toString(),
-    };
-  }
-
-  toJSON() {
-    return {
-      $typeName: this.$typeName,
-      $typeArgs: this.$typeArgs,
-      ...this.toJSONField(),
-    };
-  }
-
-  static fromJSONField(field: any): TokensReceivedEvent {
-    return TokensReceivedEvent.reified().new({
-      token: decodeFromJSONField(String.reified(), field.token),
-      message: decodeFromJSONField(String.reified(), field.message),
-      recipient: decodeFromJSONField("address", field.recipient),
-      extraGasValue: decodeFromJSONField("u64", field.extraGasValue),
-    });
-  }
-
-  static fromJSON(json: Record<string, any>): TokensReceivedEvent {
-    if (json.$typeName !== TokensReceivedEvent.$typeName) {
-      throw new Error("not a WithTwoGenerics json object");
-    }
-
-    return TokensReceivedEvent.fromJSONField(json);
-  }
-
-  static fromSuiParsedData(content: SuiParsedData): TokensReceivedEvent {
-    if (content.dataType !== "moveObject") {
-      throw new Error("not an object");
-    }
-    if (!isTokensReceivedEvent(content.type)) {
-      throw new Error(`object at ${(content.fields as any).id} is not a TokensReceivedEvent object`);
-    }
-    return TokensReceivedEvent.fromFieldsWithTypes(content);
-  }
-
-  static fromSuiObjectData(data: SuiObjectData): TokensReceivedEvent {
-    if (data.bcs) {
-      if (data.bcs.dataType !== "moveObject" || !isTokensReceivedEvent(data.bcs.type)) {
-        throw new Error(`object at is not a TokensReceivedEvent object`);
-      }
-
-      return TokensReceivedEvent.fromBcs(fromB64(data.bcs.bcsBytes));
-    }
-    if (data.content) {
-      return TokensReceivedEvent.fromSuiParsedData(data.content);
-    }
-    throw new Error(
-      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
-    );
-  }
-
-  static async fetch(client: SuiClient, id: string): Promise<TokensReceivedEvent> {
-    const res = await client.getObject({ id, options: { showBcs: true } });
-    if (res.error) {
-      throw new Error(`error fetching TokensReceivedEvent object at id ${id}: ${res.error.code}`);
-    }
-    if (res.data?.bcs?.dataType !== "moveObject" || !isTokensReceivedEvent(res.data.bcs.type)) {
-      throw new Error(`object at id ${id} is not a TokensReceivedEvent object`);
-    }
-
-    return TokensReceivedEvent.fromSuiObjectData(res.data);
-  }
-}
+import { composeSuiType, compressSuiType, FieldsWithTypes } from "../../_framework/util";
 
 /* ============================== TokensSentEvent =============================== */
 
 export function isTokensSentEvent(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::events::TokensSentEvent`;
+  return type === `${getTypeOrigin("cctp-bridge", "events::TokensSentEvent")}::events::TokensSentEvent`;
 }
 
 export interface TokensSentEventFields {
@@ -414,19 +39,35 @@ export interface TokensSentEventFields {
 
 export type TokensSentEventReified = Reified<TokensSentEvent, TokensSentEventFields>;
 
+export type TokensSentEventJSONField = {
+  token: string;
+  amount: string;
+  adminFee: string;
+  sender: string;
+  recipient: string;
+  recipientWalletAddress: string;
+  destinationChainId: number;
+  nonce: string;
+};
+
+export type TokensSentEventJSON = {
+  $typeName: typeof TokensSentEvent.$typeName;
+  $typeArgs: [];
+} & TokensSentEventJSONField;
+
 export class TokensSentEvent implements StructClass {
   __StructClass = true as const;
 
-  static get $typeName() {
-    return `${PKG_V1}::events::TokensSentEvent`;
+  static get $typeName(): `${string}::events::TokensSentEvent` {
+    return `${getTypeOrigin("cctp-bridge", "events::TokensSentEvent")}::events::TokensSentEvent` as const;
   }
   static readonly $numTypeParams = 0;
   static readonly $isPhantom = [] as const;
 
-  readonly $typeName = TokensSentEvent.$typeName;
-  readonly $fullTypeName: string;
+  readonly $typeName: typeof TokensSentEvent.$typeName = TokensSentEvent.$typeName;
+  readonly $fullTypeName: `${string}::events::TokensSentEvent`;
   readonly $typeArgs: [];
-  readonly $isPhantom = TokensSentEvent.$isPhantom;
+  readonly $isPhantom: typeof TokensSentEvent.$isPhantom = TokensSentEvent.$isPhantom;
 
   readonly token: ToField<String>;
   readonly amount: ToField<"u64">;
@@ -438,7 +79,7 @@ export class TokensSentEvent implements StructClass {
   readonly nonce: ToField<"u64">;
 
   private constructor(typeArgs: [], fields: TokensSentEventFields) {
-    this.$fullTypeName = composeSuiType(TokensSentEvent.$typeName, ...typeArgs) as string;
+    this.$fullTypeName = composeSuiType(TokensSentEvent.$typeName, ...typeArgs) as `${string}::events::TokensSentEvent`;
     this.$typeArgs = typeArgs;
 
     this.token = fields.token;
@@ -452,21 +93,27 @@ export class TokensSentEvent implements StructClass {
   }
 
   static reified(): TokensSentEventReified {
+    const reifiedBcs = TokensSentEvent.bcs;
     return {
-      typeName: TokensSentEvent.$typeName,
-      fullTypeName: composeSuiType(TokensSentEvent.$typeName, ...[]) as string,
+      get typeName() {
+        return TokensSentEvent.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(TokensSentEvent.$typeName, ...[]) as `${string}::events::TokensSentEvent`;
+      },
       typeArgs: [] as [],
       isPhantom: TokensSentEvent.$isPhantom,
       reifiedTypeArgs: [],
       fromFields: (fields: Record<string, any>) => TokensSentEvent.fromFields(fields),
       fromFieldsWithTypes: (item: FieldsWithTypes) => TokensSentEvent.fromFieldsWithTypes(item),
-      fromBcs: (data: Uint8Array) => TokensSentEvent.fromBcs(data),
-      bcs: TokensSentEvent.bcs,
+      fromBcs: (data: Uint8Array) => TokensSentEvent.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
       fromJSONField: (field: any) => TokensSentEvent.fromJSONField(field),
       fromJSON: (json: Record<string, any>) => TokensSentEvent.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => TokensSentEvent.fromCoreObject(obj),
       fromSuiParsedData: (content: SuiParsedData) => TokensSentEvent.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) => TokensSentEvent.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) => TokensSentEvent.fetch(client, id),
+      fetch: async (client: ClientWithCoreApi, id: string) => TokensSentEvent.fetch(client, id),
       new: (fields: TokensSentEventFields) => {
         return new TokensSentEvent([], fields);
       },
@@ -474,31 +121,41 @@ export class TokensSentEvent implements StructClass {
     };
   }
 
-  static get r() {
+  static get r(): TokensSentEventReified {
     return TokensSentEvent.reified();
   }
 
   static phantom(): PhantomReified<ToTypeStr<TokensSentEvent>> {
     return phantom(TokensSentEvent.reified());
   }
-  static get p() {
+
+  static get p(): PhantomReified<ToTypeStr<TokensSentEvent>> {
     return TokensSentEvent.phantom();
   }
 
-  static get bcs() {
+  private static instantiateBcs() {
     return bcs.struct("TokensSentEvent", {
       token: String.bcs,
       amount: bcs.u64(),
       admin_fee: bcs.u64(),
       sender: bcs.bytes(32).transform({
-        input: (val: string) => fromHEX(val),
-        output: (val: Uint8Array) => toHEX(val),
+        input: (val: string) => fromHex(val),
+        output: (val: Uint8Array) => toHex(val),
       }),
       recipient: String.bcs,
       recipient_wallet_address: String.bcs,
       destination_chain_id: bcs.u8(),
       nonce: bcs.u64(),
     });
+  }
+
+  private static cachedBcs: ReturnType<typeof TokensSentEvent.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof TokensSentEvent.instantiateBcs> {
+    if (!TokensSentEvent.cachedBcs) {
+      TokensSentEvent.cachedBcs = TokensSentEvent.instantiateBcs();
+    }
+    return TokensSentEvent.cachedBcs;
   }
 
   static fromFields(fields: Record<string, any>): TokensSentEvent {
@@ -535,7 +192,7 @@ export class TokensSentEvent implements StructClass {
     return TokensSentEvent.fromFields(TokensSentEvent.bcs.parse(data));
   }
 
-  toJSONField() {
+  toJSONField(): TokensSentEventJSONField {
     return {
       token: this.token,
       amount: this.amount.toString(),
@@ -548,12 +205,8 @@ export class TokensSentEvent implements StructClass {
     };
   }
 
-  toJSON() {
-    return {
-      $typeName: this.$typeName,
-      $typeArgs: this.$typeArgs,
-      ...this.toJSONField(),
-    };
+  toJSON(): TokensSentEventJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
   }
 
   static fromJSONField(field: any): TokensSentEvent {
@@ -571,12 +224,22 @@ export class TokensSentEvent implements StructClass {
 
   static fromJSON(json: Record<string, any>): TokensSentEvent {
     if (json.$typeName !== TokensSentEvent.$typeName) {
-      throw new Error("not a WithTwoGenerics json object");
+      throw new Error(
+        `not a TokensSentEvent json object: expected '${TokensSentEvent.$typeName}' but got '${json.$typeName}'`
+      );
     }
 
     return TokensSentEvent.fromJSONField(json);
   }
 
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): TokensSentEvent {
+    if (!isTokensSentEvent(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a TokensSentEvent object`);
+    }
+    return TokensSentEvent.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link TokensSentEvent.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiParsedData(content: SuiParsedData): TokensSentEvent {
     if (content.dataType !== "moveObject") {
       throw new Error("not an object");
@@ -587,13 +250,14 @@ export class TokensSentEvent implements StructClass {
     return TokensSentEvent.fromFieldsWithTypes(content);
   }
 
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link TokensSentEvent.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiObjectData(data: SuiObjectData): TokensSentEvent {
     if (data.bcs) {
       if (data.bcs.dataType !== "moveObject" || !isTokensSentEvent(data.bcs.type)) {
         throw new Error(`object at is not a TokensSentEvent object`);
       }
 
-      return TokensSentEvent.fromBcs(fromB64(data.bcs.bcsBytes));
+      return TokensSentEvent.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return TokensSentEvent.fromSuiParsedData(data.content);
@@ -603,16 +267,242 @@ export class TokensSentEvent implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<TokensSentEvent> {
-    const res = await client.getObject({ id, options: { showBcs: true } });
-    if (res.error) {
-      throw new Error(`error fetching TokensSentEvent object at id ${id}: ${res.error.code}`);
-    }
-    if (res.data?.bcs?.dataType !== "moveObject" || !isTokensSentEvent(res.data.bcs.type)) {
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<TokensSentEvent> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isTokensSentEvent(object.type)) {
       throw new Error(`object at id ${id} is not a TokensSentEvent object`);
     }
+    return TokensSentEvent.fromBcs(object.content);
+  }
+}
 
-    return TokensSentEvent.fromSuiObjectData(res.data);
+/* ============================== TokensReceivedEvent =============================== */
+
+export function isTokensReceivedEvent(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `${getTypeOrigin("cctp-bridge", "events::TokensReceivedEvent")}::events::TokensReceivedEvent`;
+}
+
+export interface TokensReceivedEventFields {
+  token: ToField<String>;
+  message: ToField<String>;
+  recipient: ToField<"address">;
+  extraGasValue: ToField<"u64">;
+}
+
+export type TokensReceivedEventReified = Reified<TokensReceivedEvent, TokensReceivedEventFields>;
+
+export type TokensReceivedEventJSONField = {
+  token: string;
+  message: string;
+  recipient: string;
+  extraGasValue: string;
+};
+
+export type TokensReceivedEventJSON = {
+  $typeName: typeof TokensReceivedEvent.$typeName;
+  $typeArgs: [];
+} & TokensReceivedEventJSONField;
+
+export class TokensReceivedEvent implements StructClass {
+  __StructClass = true as const;
+
+  static get $typeName(): `${string}::events::TokensReceivedEvent` {
+    return `${getTypeOrigin("cctp-bridge", "events::TokensReceivedEvent")}::events::TokensReceivedEvent` as const;
+  }
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof TokensReceivedEvent.$typeName = TokensReceivedEvent.$typeName;
+  readonly $fullTypeName: `${string}::events::TokensReceivedEvent`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof TokensReceivedEvent.$isPhantom = TokensReceivedEvent.$isPhantom;
+
+  readonly token: ToField<String>;
+  readonly message: ToField<String>;
+  readonly recipient: ToField<"address">;
+  readonly extraGasValue: ToField<"u64">;
+
+  private constructor(typeArgs: [], fields: TokensReceivedEventFields) {
+    this.$fullTypeName = composeSuiType(
+      TokensReceivedEvent.$typeName,
+      ...typeArgs
+    ) as `${string}::events::TokensReceivedEvent`;
+    this.$typeArgs = typeArgs;
+
+    this.token = fields.token;
+    this.message = fields.message;
+    this.recipient = fields.recipient;
+    this.extraGasValue = fields.extraGasValue;
+  }
+
+  static reified(): TokensReceivedEventReified {
+    const reifiedBcs = TokensReceivedEvent.bcs;
+    return {
+      get typeName() {
+        return TokensReceivedEvent.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(TokensReceivedEvent.$typeName, ...[]) as `${string}::events::TokensReceivedEvent`;
+      },
+      typeArgs: [] as [],
+      isPhantom: TokensReceivedEvent.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => TokensReceivedEvent.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => TokensReceivedEvent.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => TokensReceivedEvent.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => TokensReceivedEvent.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => TokensReceivedEvent.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => TokensReceivedEvent.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => TokensReceivedEvent.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => TokensReceivedEvent.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => TokensReceivedEvent.fetch(client, id),
+      new: (fields: TokensReceivedEventFields) => {
+        return new TokensReceivedEvent([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): TokensReceivedEventReified {
+    return TokensReceivedEvent.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<TokensReceivedEvent>> {
+    return phantom(TokensReceivedEvent.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<TokensReceivedEvent>> {
+    return TokensReceivedEvent.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("TokensReceivedEvent", {
+      token: String.bcs,
+      message: String.bcs,
+      recipient: bcs.bytes(32).transform({
+        input: (val: string) => fromHex(val),
+        output: (val: Uint8Array) => toHex(val),
+      }),
+      extra_gas_value: bcs.u64(),
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof TokensReceivedEvent.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof TokensReceivedEvent.instantiateBcs> {
+    if (!TokensReceivedEvent.cachedBcs) {
+      TokensReceivedEvent.cachedBcs = TokensReceivedEvent.instantiateBcs();
+    }
+    return TokensReceivedEvent.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): TokensReceivedEvent {
+    return TokensReceivedEvent.reified().new({
+      token: decodeFromFields(String.reified(), fields.token),
+      message: decodeFromFields(String.reified(), fields.message),
+      recipient: decodeFromFields("address", fields.recipient),
+      extraGasValue: decodeFromFields("u64", fields.extra_gas_value),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): TokensReceivedEvent {
+    if (!isTokensReceivedEvent(item.type)) {
+      throw new Error("not a TokensReceivedEvent type");
+    }
+
+    return TokensReceivedEvent.reified().new({
+      token: decodeFromFieldsWithTypes(String.reified(), item.fields.token),
+      message: decodeFromFieldsWithTypes(String.reified(), item.fields.message),
+      recipient: decodeFromFieldsWithTypes("address", item.fields.recipient),
+      extraGasValue: decodeFromFieldsWithTypes("u64", item.fields.extra_gas_value),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): TokensReceivedEvent {
+    return TokensReceivedEvent.fromFields(TokensReceivedEvent.bcs.parse(data));
+  }
+
+  toJSONField(): TokensReceivedEventJSONField {
+    return {
+      token: this.token,
+      message: this.message,
+      recipient: this.recipient,
+      extraGasValue: this.extraGasValue.toString(),
+    };
+  }
+
+  toJSON(): TokensReceivedEventJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): TokensReceivedEvent {
+    return TokensReceivedEvent.reified().new({
+      token: decodeFromJSONField(String.reified(), field.token),
+      message: decodeFromJSONField(String.reified(), field.message),
+      recipient: decodeFromJSONField("address", field.recipient),
+      extraGasValue: decodeFromJSONField("u64", field.extraGasValue),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): TokensReceivedEvent {
+    if (json.$typeName !== TokensReceivedEvent.$typeName) {
+      throw new Error(
+        `not a TokensReceivedEvent json object: expected '${TokensReceivedEvent.$typeName}' but got '${json.$typeName}'`
+      );
+    }
+
+    return TokensReceivedEvent.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): TokensReceivedEvent {
+    if (!isTokensReceivedEvent(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a TokensReceivedEvent object`);
+    }
+    return TokensReceivedEvent.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link TokensReceivedEvent.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): TokensReceivedEvent {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isTokensReceivedEvent(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a TokensReceivedEvent object`);
+    }
+    return TokensReceivedEvent.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link TokensReceivedEvent.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): TokensReceivedEvent {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isTokensReceivedEvent(data.bcs.type)) {
+        throw new Error(`object at is not a TokensReceivedEvent object`);
+      }
+
+      return TokensReceivedEvent.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return TokensReceivedEvent.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<TokensReceivedEvent> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isTokensReceivedEvent(object.type)) {
+      throw new Error(`object at id ${id} is not a TokensReceivedEvent object`);
+    }
+    return TokensReceivedEvent.fromBcs(object.content);
   }
 }
 
@@ -620,7 +510,7 @@ export class TokensSentEvent implements StructClass {
 
 export function isRecipientReplaced(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::events::RecipientReplaced`;
+  return type === `${getTypeOrigin("cctp-bridge", "events::RecipientReplaced")}::events::RecipientReplaced`;
 }
 
 export interface RecipientReplacedFields {
@@ -632,19 +522,31 @@ export interface RecipientReplacedFields {
 
 export type RecipientReplacedReified = Reified<RecipientReplaced, RecipientReplacedFields>;
 
+export type RecipientReplacedJSONField = {
+  token: string;
+  sender: string;
+  nonce: string;
+  newRecipitne: string;
+};
+
+export type RecipientReplacedJSON = {
+  $typeName: typeof RecipientReplaced.$typeName;
+  $typeArgs: [];
+} & RecipientReplacedJSONField;
+
 export class RecipientReplaced implements StructClass {
   __StructClass = true as const;
 
-  static get $typeName() {
-    return `${PKG_V1}::events::RecipientReplaced`;
+  static get $typeName(): `${string}::events::RecipientReplaced` {
+    return `${getTypeOrigin("cctp-bridge", "events::RecipientReplaced")}::events::RecipientReplaced` as const;
   }
   static readonly $numTypeParams = 0;
   static readonly $isPhantom = [] as const;
 
-  readonly $typeName = RecipientReplaced.$typeName;
-  readonly $fullTypeName: string;
+  readonly $typeName: typeof RecipientReplaced.$typeName = RecipientReplaced.$typeName;
+  readonly $fullTypeName: `${string}::events::RecipientReplaced`;
   readonly $typeArgs: [];
-  readonly $isPhantom = RecipientReplaced.$isPhantom;
+  readonly $isPhantom: typeof RecipientReplaced.$isPhantom = RecipientReplaced.$isPhantom;
 
   readonly token: ToField<String>;
   readonly sender: ToField<"address">;
@@ -652,7 +554,10 @@ export class RecipientReplaced implements StructClass {
   readonly newRecipitne: ToField<String>;
 
   private constructor(typeArgs: [], fields: RecipientReplacedFields) {
-    this.$fullTypeName = composeSuiType(RecipientReplaced.$typeName, ...typeArgs) as string;
+    this.$fullTypeName = composeSuiType(
+      RecipientReplaced.$typeName,
+      ...typeArgs
+    ) as `${string}::events::RecipientReplaced`;
     this.$typeArgs = typeArgs;
 
     this.token = fields.token;
@@ -662,21 +567,27 @@ export class RecipientReplaced implements StructClass {
   }
 
   static reified(): RecipientReplacedReified {
+    const reifiedBcs = RecipientReplaced.bcs;
     return {
-      typeName: RecipientReplaced.$typeName,
-      fullTypeName: composeSuiType(RecipientReplaced.$typeName, ...[]) as string,
+      get typeName() {
+        return RecipientReplaced.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(RecipientReplaced.$typeName, ...[]) as `${string}::events::RecipientReplaced`;
+      },
       typeArgs: [] as [],
       isPhantom: RecipientReplaced.$isPhantom,
       reifiedTypeArgs: [],
       fromFields: (fields: Record<string, any>) => RecipientReplaced.fromFields(fields),
       fromFieldsWithTypes: (item: FieldsWithTypes) => RecipientReplaced.fromFieldsWithTypes(item),
-      fromBcs: (data: Uint8Array) => RecipientReplaced.fromBcs(data),
-      bcs: RecipientReplaced.bcs,
+      fromBcs: (data: Uint8Array) => RecipientReplaced.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
       fromJSONField: (field: any) => RecipientReplaced.fromJSONField(field),
       fromJSON: (json: Record<string, any>) => RecipientReplaced.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => RecipientReplaced.fromCoreObject(obj),
       fromSuiParsedData: (content: SuiParsedData) => RecipientReplaced.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) => RecipientReplaced.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) => RecipientReplaced.fetch(client, id),
+      fetch: async (client: ClientWithCoreApi, id: string) => RecipientReplaced.fetch(client, id),
       new: (fields: RecipientReplacedFields) => {
         return new RecipientReplaced([], fields);
       },
@@ -684,27 +595,37 @@ export class RecipientReplaced implements StructClass {
     };
   }
 
-  static get r() {
+  static get r(): RecipientReplacedReified {
     return RecipientReplaced.reified();
   }
 
   static phantom(): PhantomReified<ToTypeStr<RecipientReplaced>> {
     return phantom(RecipientReplaced.reified());
   }
-  static get p() {
+
+  static get p(): PhantomReified<ToTypeStr<RecipientReplaced>> {
     return RecipientReplaced.phantom();
   }
 
-  static get bcs() {
+  private static instantiateBcs() {
     return bcs.struct("RecipientReplaced", {
       token: String.bcs,
       sender: bcs.bytes(32).transform({
-        input: (val: string) => fromHEX(val),
-        output: (val: Uint8Array) => toHEX(val),
+        input: (val: string) => fromHex(val),
+        output: (val: Uint8Array) => toHex(val),
       }),
       nonce: bcs.u64(),
       new_recipitne: String.bcs,
     });
+  }
+
+  private static cachedBcs: ReturnType<typeof RecipientReplaced.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof RecipientReplaced.instantiateBcs> {
+    if (!RecipientReplaced.cachedBcs) {
+      RecipientReplaced.cachedBcs = RecipientReplaced.instantiateBcs();
+    }
+    return RecipientReplaced.cachedBcs;
   }
 
   static fromFields(fields: Record<string, any>): RecipientReplaced {
@@ -733,7 +654,7 @@ export class RecipientReplaced implements StructClass {
     return RecipientReplaced.fromFields(RecipientReplaced.bcs.parse(data));
   }
 
-  toJSONField() {
+  toJSONField(): RecipientReplacedJSONField {
     return {
       token: this.token,
       sender: this.sender,
@@ -742,12 +663,8 @@ export class RecipientReplaced implements StructClass {
     };
   }
 
-  toJSON() {
-    return {
-      $typeName: this.$typeName,
-      $typeArgs: this.$typeArgs,
-      ...this.toJSONField(),
-    };
+  toJSON(): RecipientReplacedJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
   }
 
   static fromJSONField(field: any): RecipientReplaced {
@@ -761,12 +678,22 @@ export class RecipientReplaced implements StructClass {
 
   static fromJSON(json: Record<string, any>): RecipientReplaced {
     if (json.$typeName !== RecipientReplaced.$typeName) {
-      throw new Error("not a WithTwoGenerics json object");
+      throw new Error(
+        `not a RecipientReplaced json object: expected '${RecipientReplaced.$typeName}' but got '${json.$typeName}'`
+      );
     }
 
     return RecipientReplaced.fromJSONField(json);
   }
 
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): RecipientReplaced {
+    if (!isRecipientReplaced(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a RecipientReplaced object`);
+    }
+    return RecipientReplaced.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link RecipientReplaced.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiParsedData(content: SuiParsedData): RecipientReplaced {
     if (content.dataType !== "moveObject") {
       throw new Error("not an object");
@@ -777,13 +704,14 @@ export class RecipientReplaced implements StructClass {
     return RecipientReplaced.fromFieldsWithTypes(content);
   }
 
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link RecipientReplaced.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiObjectData(data: SuiObjectData): RecipientReplaced {
     if (data.bcs) {
       if (data.bcs.dataType !== "moveObject" || !isRecipientReplaced(data.bcs.type)) {
         throw new Error(`object at is not a RecipientReplaced object`);
       }
 
-      return RecipientReplaced.fromBcs(fromB64(data.bcs.bcsBytes));
+      return RecipientReplaced.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return RecipientReplaced.fromSuiParsedData(data.content);
@@ -793,15 +721,235 @@ export class RecipientReplaced implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<RecipientReplaced> {
-    const res = await client.getObject({ id, options: { showBcs: true } });
-    if (res.error) {
-      throw new Error(`error fetching RecipientReplaced object at id ${id}: ${res.error.code}`);
-    }
-    if (res.data?.bcs?.dataType !== "moveObject" || !isRecipientReplaced(res.data.bcs.type)) {
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<RecipientReplaced> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isRecipientReplaced(object.type)) {
       throw new Error(`object at id ${id} is not a RecipientReplaced object`);
     }
+    return RecipientReplaced.fromBcs(object.content);
+  }
+}
 
-    return RecipientReplaced.fromSuiObjectData(res.data);
+/* ============================== ReceiveFeeEvent =============================== */
+
+export function isReceiveFeeEvent(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `${getTypeOrigin("cctp-bridge", "events::ReceiveFeeEvent")}::events::ReceiveFeeEvent`;
+}
+
+export interface ReceiveFeeEventFields {
+  userPaySui: ToField<"u64">;
+  userPayStable: ToField<"u64">;
+  totalPaySui: ToField<"u64">;
+  totalFeeSui: ToField<"u64">;
+}
+
+export type ReceiveFeeEventReified = Reified<ReceiveFeeEvent, ReceiveFeeEventFields>;
+
+export type ReceiveFeeEventJSONField = {
+  userPaySui: string;
+  userPayStable: string;
+  totalPaySui: string;
+  totalFeeSui: string;
+};
+
+export type ReceiveFeeEventJSON = {
+  $typeName: typeof ReceiveFeeEvent.$typeName;
+  $typeArgs: [];
+} & ReceiveFeeEventJSONField;
+
+export class ReceiveFeeEvent implements StructClass {
+  __StructClass = true as const;
+
+  static get $typeName(): `${string}::events::ReceiveFeeEvent` {
+    return `${getTypeOrigin("cctp-bridge", "events::ReceiveFeeEvent")}::events::ReceiveFeeEvent` as const;
+  }
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof ReceiveFeeEvent.$typeName = ReceiveFeeEvent.$typeName;
+  readonly $fullTypeName: `${string}::events::ReceiveFeeEvent`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof ReceiveFeeEvent.$isPhantom = ReceiveFeeEvent.$isPhantom;
+
+  readonly userPaySui: ToField<"u64">;
+  readonly userPayStable: ToField<"u64">;
+  readonly totalPaySui: ToField<"u64">;
+  readonly totalFeeSui: ToField<"u64">;
+
+  private constructor(typeArgs: [], fields: ReceiveFeeEventFields) {
+    this.$fullTypeName = composeSuiType(ReceiveFeeEvent.$typeName, ...typeArgs) as `${string}::events::ReceiveFeeEvent`;
+    this.$typeArgs = typeArgs;
+
+    this.userPaySui = fields.userPaySui;
+    this.userPayStable = fields.userPayStable;
+    this.totalPaySui = fields.totalPaySui;
+    this.totalFeeSui = fields.totalFeeSui;
+  }
+
+  static reified(): ReceiveFeeEventReified {
+    const reifiedBcs = ReceiveFeeEvent.bcs;
+    return {
+      get typeName() {
+        return ReceiveFeeEvent.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(ReceiveFeeEvent.$typeName, ...[]) as `${string}::events::ReceiveFeeEvent`;
+      },
+      typeArgs: [] as [],
+      isPhantom: ReceiveFeeEvent.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => ReceiveFeeEvent.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => ReceiveFeeEvent.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => ReceiveFeeEvent.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => ReceiveFeeEvent.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => ReceiveFeeEvent.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => ReceiveFeeEvent.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => ReceiveFeeEvent.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => ReceiveFeeEvent.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => ReceiveFeeEvent.fetch(client, id),
+      new: (fields: ReceiveFeeEventFields) => {
+        return new ReceiveFeeEvent([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): ReceiveFeeEventReified {
+    return ReceiveFeeEvent.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<ReceiveFeeEvent>> {
+    return phantom(ReceiveFeeEvent.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<ReceiveFeeEvent>> {
+    return ReceiveFeeEvent.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("ReceiveFeeEvent", {
+      user_pay_sui: bcs.u64(),
+      user_pay_stable: bcs.u64(),
+      total_pay_sui: bcs.u64(),
+      total_fee_sui: bcs.u64(),
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof ReceiveFeeEvent.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof ReceiveFeeEvent.instantiateBcs> {
+    if (!ReceiveFeeEvent.cachedBcs) {
+      ReceiveFeeEvent.cachedBcs = ReceiveFeeEvent.instantiateBcs();
+    }
+    return ReceiveFeeEvent.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): ReceiveFeeEvent {
+    return ReceiveFeeEvent.reified().new({
+      userPaySui: decodeFromFields("u64", fields.user_pay_sui),
+      userPayStable: decodeFromFields("u64", fields.user_pay_stable),
+      totalPaySui: decodeFromFields("u64", fields.total_pay_sui),
+      totalFeeSui: decodeFromFields("u64", fields.total_fee_sui),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): ReceiveFeeEvent {
+    if (!isReceiveFeeEvent(item.type)) {
+      throw new Error("not a ReceiveFeeEvent type");
+    }
+
+    return ReceiveFeeEvent.reified().new({
+      userPaySui: decodeFromFieldsWithTypes("u64", item.fields.user_pay_sui),
+      userPayStable: decodeFromFieldsWithTypes("u64", item.fields.user_pay_stable),
+      totalPaySui: decodeFromFieldsWithTypes("u64", item.fields.total_pay_sui),
+      totalFeeSui: decodeFromFieldsWithTypes("u64", item.fields.total_fee_sui),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): ReceiveFeeEvent {
+    return ReceiveFeeEvent.fromFields(ReceiveFeeEvent.bcs.parse(data));
+  }
+
+  toJSONField(): ReceiveFeeEventJSONField {
+    return {
+      userPaySui: this.userPaySui.toString(),
+      userPayStable: this.userPayStable.toString(),
+      totalPaySui: this.totalPaySui.toString(),
+      totalFeeSui: this.totalFeeSui.toString(),
+    };
+  }
+
+  toJSON(): ReceiveFeeEventJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): ReceiveFeeEvent {
+    return ReceiveFeeEvent.reified().new({
+      userPaySui: decodeFromJSONField("u64", field.userPaySui),
+      userPayStable: decodeFromJSONField("u64", field.userPayStable),
+      totalPaySui: decodeFromJSONField("u64", field.totalPaySui),
+      totalFeeSui: decodeFromJSONField("u64", field.totalFeeSui),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): ReceiveFeeEvent {
+    if (json.$typeName !== ReceiveFeeEvent.$typeName) {
+      throw new Error(
+        `not a ReceiveFeeEvent json object: expected '${ReceiveFeeEvent.$typeName}' but got '${json.$typeName}'`
+      );
+    }
+
+    return ReceiveFeeEvent.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): ReceiveFeeEvent {
+    if (!isReceiveFeeEvent(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a ReceiveFeeEvent object`);
+    }
+    return ReceiveFeeEvent.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link ReceiveFeeEvent.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): ReceiveFeeEvent {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isReceiveFeeEvent(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a ReceiveFeeEvent object`);
+    }
+    return ReceiveFeeEvent.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link ReceiveFeeEvent.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): ReceiveFeeEvent {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isReceiveFeeEvent(data.bcs.type)) {
+        throw new Error(`object at is not a ReceiveFeeEvent object`);
+      }
+
+      return ReceiveFeeEvent.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return ReceiveFeeEvent.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<ReceiveFeeEvent> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isReceiveFeeEvent(object.type)) {
+      throw new Error(`object at id ${id} is not a ReceiveFeeEvent object`);
+    }
+    return ReceiveFeeEvent.fromBcs(object.content);
   }
 }

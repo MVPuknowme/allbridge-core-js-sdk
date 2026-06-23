@@ -1,38 +1,29 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
+import { Transaction, TransactionArgument, TransactionObjectInput, TransactionResult } from "@mysten/sui/transactions";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
 import { obj, pure } from "../../_framework/util";
-import { Transaction, TransactionArgument, TransactionObjectInput } from "@mysten/sui/transactions";
 
-export function destroyEmpty(tx: Transaction, userDeposit: TransactionObjectInput) {
+export function new_(
+  tx: Transaction,
+  address: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::destroy_empty`,
-    arguments: [obj(tx, userDeposit)],
-  });
-}
-
-export function new_(tx: Transaction, address: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::new`,
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::new`,
     arguments: [obj(tx, address)],
   });
 }
 
-export interface SetGasUsageArgs {
+export interface SetAddressArgs {
   anotherBridge: TransactionObjectInput;
-  gasUsage: bigint | TransactionArgument;
+  address: TransactionObjectInput;
 }
 
-export function setGasUsage(tx: Transaction, args: SetGasUsageArgs) {
+export function setAddress(tx: Transaction, args: SetAddressArgs, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::set_gas_usage`,
-    arguments: [obj(tx, args.anotherBridge), pure(tx, args.gasUsage, `u64`)],
-  });
-}
-
-export function gasUsage(tx: Transaction, anotherBridge: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::gas_usage`,
-    arguments: [obj(tx, anotherBridge)],
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::set_address`,
+    arguments: [obj(tx, args.anotherBridge), obj(tx, args.address)],
   });
 }
 
@@ -41,28 +32,9 @@ export interface AddTokenArgs {
   address: TransactionObjectInput;
 }
 
-export function addToken(tx: Transaction, args: AddTokenArgs) {
+export function addToken(tx: Transaction, args: AddTokenArgs, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::add_token`,
-    arguments: [obj(tx, args.anotherBridge), obj(tx, args.address)],
-  });
-}
-
-export function bridgeAddress(tx: Transaction, anotherBridge: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::bridge_address`,
-    arguments: [obj(tx, anotherBridge)],
-  });
-}
-
-export interface HasTokenArgs {
-  anotherBridge: TransactionObjectInput;
-  address: TransactionObjectInput;
-}
-
-export function hasToken(tx: Transaction, args: HasTokenArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::has_token`,
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::add_token`,
     arguments: [obj(tx, args.anotherBridge), obj(tx, args.address)],
   });
 }
@@ -72,21 +44,66 @@ export interface RemoveTokenArgs {
   address: TransactionObjectInput;
 }
 
-export function removeToken(tx: Transaction, args: RemoveTokenArgs) {
+export function removeToken(tx: Transaction, args: RemoveTokenArgs, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::remove_token`,
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::remove_token`,
     arguments: [obj(tx, args.anotherBridge), obj(tx, args.address)],
   });
 }
 
-export interface SetAddressArgs {
+export interface HasTokenArgs {
   anotherBridge: TransactionObjectInput;
   address: TransactionObjectInput;
 }
 
-export function setAddress(tx: Transaction, args: SetAddressArgs) {
+export function hasToken(tx: Transaction, args: HasTokenArgs, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::another_bridge::set_address`,
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::has_token`,
     arguments: [obj(tx, args.anotherBridge), obj(tx, args.address)],
+  });
+}
+
+export interface SetGasUsageArgs {
+  anotherBridge: TransactionObjectInput;
+  gasUsage: bigint | TransactionArgument;
+}
+
+export function setGasUsage(tx: Transaction, args: SetGasUsageArgs, options?: { env?: EnvConfig }): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::set_gas_usage`,
+    arguments: [obj(tx, args.anotherBridge), pure(tx, args.gasUsage, `u64`)],
+  });
+}
+
+export function bridgeAddress(
+  tx: Transaction,
+  anotherBridge: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::bridge_address`,
+    arguments: [obj(tx, anotherBridge)],
+  });
+}
+
+export function gasUsage(
+  tx: Transaction,
+  anotherBridge: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::gas_usage`,
+    arguments: [obj(tx, anotherBridge)],
+  });
+}
+
+export function destroyEmpty(
+  tx: Transaction,
+  userDeposit: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::another_bridge::destroy_empty`,
+    arguments: [obj(tx, userDeposit)],
   });
 }

@@ -1,7 +1,7 @@
 // @ts-nocheck
-
-import { compressSuiType, parseTypeName } from "./util";
+import { registerClasses } from "./init-loader";
 import {
+  phantom,
   PhantomReified,
   PhantomTypeArgument,
   Primitive,
@@ -9,12 +9,11 @@ import {
   StructClass,
   StructClassReified,
   TypeArgument,
+  vector,
   VectorClass,
   VectorClassReified,
-  phantom,
-  vector,
 } from "./reified";
-import { registerClasses } from "./init-loader";
+import { compressSuiType, parseTypeName } from "./util";
 
 export type PrimitiveValue = string | number | boolean | bigint;
 
@@ -28,12 +27,11 @@ interface _StructClass {
 }
 
 export class StructClassLoader {
-  private map: Map<string, _StructClass> = new Map();
+  // Don't key on $typeName at register time — it's a getter (see ADR-005).
+  private classes: _StructClass[] = [];
 
-  register(...classes: _StructClass[]) {
-    for (const cls of classes) {
-      this.map.set(cls.$typeName, cls);
-    }
+  register(...classes: _StructClass[]): void {
+    this.classes.push(...classes);
   }
 
   reified<T extends Primitive>(type: T): T;
@@ -59,11 +57,11 @@ export class StructClassLoader {
       }
     }
 
-    if (!this.map.has(typeName)) {
+    const cls = this.classes.find((c) => c.$typeName === typeName);
+    if (!cls) {
       throw new Error(`Unknown type ${typeName}`);
     }
 
-    const cls = this.map.get(typeName)!;
     if (cls.$numTypeParams !== typeArgs.length) {
       throw new Error(`Type ${typeName} expects ${cls.$numTypeParams} type arguments, but got ${typeArgs.length}`);
     }
@@ -81,5 +79,5 @@ export class StructClassLoader {
   }
 }
 
-export const loader = new StructClassLoader();
+export const loader: StructClassLoader = new StructClassLoader();
 registerClasses(loader);

@@ -1,7 +1,7 @@
 import { Messenger } from "../../../client/core-api/core-api.model";
 import { AllbridgeCoreClientImpl } from "../../../client/core-api/core-client-base";
 import { AllbridgeCoreClientPoolInfoCaching } from "../../../client/core-api/core-client-pool-info-caching";
-import { ChainDetailsMap, PoolInfo, PoolInfoMap } from "../../../tokens-info";
+import { ChainDetailsMap, PoolInfoMap } from "../../../tokens-info";
 import poolGRL from "../../data/pool-info/pool-info-GRL.json";
 import poolMap from "../../data/pool-info/pool-info-map.json";
 import tokensGroupedByChain from "../../data/tokens-info/ChainDetailsMap.json";
@@ -58,7 +58,7 @@ describe("AllbridgeCachingCoreClient", () => {
         chainSymbol: "GRL",
         poolAddress: "0x727e10f9E750C922bf9dee7620B58033F566b34A",
       };
-      const expectedPoolInfo = poolGRL as unknown as PoolInfo;
+      const expectedPoolInfo = poolGRL;
 
       beforeEach(() => {
         apiMock.getPoolInfoMap.mockResolvedValue(expectedPoolInfoMap);
@@ -75,7 +75,7 @@ describe("AllbridgeCachingCoreClient", () => {
 
         await expect(client.getPoolInfoByKey(poolKeyObjectNotInCash)).rejects.toThrow(expectedErrorMessage);
         expect(apiMock.getPoolInfoMap).toHaveBeenCalledTimes(1);
-        expect(apiMock.getPoolInfoMap).toBeCalledWith(poolKeyObjectNotInCash);
+        expect(apiMock.getPoolInfoMap).toHaveBeenCalledWith(poolKeyObjectNotInCash);
       });
 
       test("☀ getPoolInfoByKey should cache returned PoolInfo Info", async () => {
@@ -95,7 +95,7 @@ describe("AllbridgeCachingCoreClient", () => {
       test("☀ refreshPoolInfo with poolKeyObject should call getPoolInfoMap", async () => {
         await client.refreshPoolInfo(poolKeyObject);
         expect(apiMock.getPoolInfoMap).toHaveBeenCalledTimes(1);
-        expect(apiMock.getPoolInfoMap).toBeCalledWith(poolKeyObject);
+        expect(apiMock.getPoolInfoMap).toHaveBeenCalledWith(poolKeyObject);
         expect(apiMock.getChainDetailsMapAndPoolInfoMap).toHaveBeenCalledTimes(1);
       });
 
@@ -103,14 +103,14 @@ describe("AllbridgeCachingCoreClient", () => {
         await client.refreshPoolInfo(poolKeyObject);
         await client.refreshPoolInfo(poolKeyObject);
         expect(apiMock.getPoolInfoMap).toHaveBeenCalledTimes(2);
-        expect(apiMock.getPoolInfoMap).toBeCalledWith(poolKeyObject);
+        expect(apiMock.getPoolInfoMap).toHaveBeenCalledWith(poolKeyObject);
         expect(apiMock.getChainDetailsMapAndPoolInfoMap).toHaveBeenCalledTimes(2);
       });
 
       test("☀ refreshPoolInfo with poolKeyObjects[] should call getPoolInfoMap", async () => {
         await client.refreshPoolInfo([poolKeyObject, poolKeyObject2]);
         expect(apiMock.getPoolInfoMap).toHaveBeenCalledTimes(1);
-        expect(apiMock.getPoolInfoMap).toBeCalledWith([poolKeyObject, poolKeyObject2]);
+        expect(apiMock.getPoolInfoMap).toHaveBeenCalledWith([poolKeyObject, poolKeyObject2]);
         expect(apiMock.getChainDetailsMapAndPoolInfoMap).toHaveBeenCalledTimes(1);
       });
     });

@@ -1,13 +1,11 @@
 // @ts-nocheck
+import { bcs } from "@mysten/sui/bcs";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
+import { UID } from "../../_dependencies/sui/object/structs";
+import { getTypeOrigin } from "../../_envs";
 import {
-  PhantomReified,
-  PhantomToTypeStr,
-  PhantomTypeArgument,
-  Reified,
-  StructClass,
-  ToField,
-  ToPhantomTypeArgument,
-  ToTypeStr,
   assertFieldsWithTypesArgsMatch,
   assertReifiedTypeArgsMatch,
   decodeFromFields,
@@ -15,19 +13,23 @@ import {
   decodeFromJSONField,
   extractType,
   phantom,
+  PhantomReified,
+  PhantomToTypeStr,
+  PhantomTypeArgument,
+  Reified,
+  StructClass,
+  ToField,
+  ToJSON,
+  ToPhantomTypeArgument,
+  ToTypeStr,
 } from "../../_framework/reified";
-import { FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName } from "../../_framework/util";
-import { UID } from "../../sui/object/structs";
-import { PKG_V1 } from "../index";
-import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { composeSuiType, compressSuiType, FieldsWithTypes, parseTypeName } from "../../_framework/util";
 
 /* ============================== UserDeposit =============================== */
 
 export function isUserDeposit(type: string): boolean {
   type = compressSuiType(type);
-  return type.startsWith(`${PKG_V1}::user_deposit::UserDeposit` + "<");
+  return type.startsWith(`${getTypeOrigin("bridge", "user_deposit::UserDeposit")}::user_deposit::UserDeposit` + "<");
 }
 
 export interface UserDepositFields<T extends PhantomTypeArgument> {
@@ -38,26 +40,40 @@ export interface UserDepositFields<T extends PhantomTypeArgument> {
 
 export type UserDepositReified<T extends PhantomTypeArgument> = Reified<UserDeposit<T>, UserDepositFields<T>>;
 
+export type UserDepositJSONField<T extends PhantomTypeArgument> = {
+  id: string;
+  lpAmount: string;
+  rewardDebt: string;
+};
+
+export type UserDepositJSON<T extends PhantomTypeArgument> = {
+  $typeName: typeof UserDeposit.$typeName;
+  $typeArgs: [PhantomToTypeStr<T>];
+} & UserDepositJSONField<T>;
+
 export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
   __StructClass = true as const;
 
-  static get $typeName() {
-    return `${PKG_V1}::user_deposit::UserDeposit`;
+  static get $typeName(): `${string}::user_deposit::UserDeposit` {
+    return `${getTypeOrigin("bridge", "user_deposit::UserDeposit")}::user_deposit::UserDeposit` as const;
   }
   static readonly $numTypeParams = 1;
   static readonly $isPhantom = [true] as const;
 
-  readonly $typeName = UserDeposit.$typeName;
-  readonly $fullTypeName: string;
+  readonly $typeName: typeof UserDeposit.$typeName = UserDeposit.$typeName;
+  readonly $fullTypeName: `${string}::user_deposit::UserDeposit<${PhantomToTypeStr<T>}>`;
   readonly $typeArgs: [PhantomToTypeStr<T>];
-  readonly $isPhantom = UserDeposit.$isPhantom;
+  readonly $isPhantom: typeof UserDeposit.$isPhantom = UserDeposit.$isPhantom;
 
   readonly id: ToField<UID>;
   readonly lpAmount: ToField<"u64">;
   readonly rewardDebt: ToField<"u64">;
 
   private constructor(typeArgs: [PhantomToTypeStr<T>], fields: UserDepositFields<T>) {
-    this.$fullTypeName = composeSuiType(UserDeposit.$typeName, ...typeArgs) as string;
+    this.$fullTypeName = composeSuiType(
+      UserDeposit.$typeName,
+      ...typeArgs
+    ) as `${string}::user_deposit::UserDeposit<${PhantomToTypeStr<T>}>`;
     this.$typeArgs = typeArgs;
 
     this.id = fields.id;
@@ -66,21 +82,32 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
   }
 
   static reified<T extends PhantomReified<PhantomTypeArgument>>(T: T): UserDepositReified<ToPhantomTypeArgument<T>> {
+    const reifiedBcs = UserDeposit.bcs;
     return {
-      typeName: UserDeposit.$typeName,
-      fullTypeName: composeSuiType(UserDeposit.$typeName, ...[extractType(T)]) as string,
-      typeArgs: [extractType(T)] as [PhantomToTypeStr<ToPhantomTypeArgument<T>>],
+      get typeName() {
+        return UserDeposit.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(
+          UserDeposit.$typeName,
+          ...[extractType(T)]
+        ) as `${string}::user_deposit::UserDeposit<${PhantomToTypeStr<ToPhantomTypeArgument<T>>}>`;
+      },
+      get typeArgs() {
+        return [extractType(T)] as [PhantomToTypeStr<ToPhantomTypeArgument<T>>];
+      },
       isPhantom: UserDeposit.$isPhantom,
       reifiedTypeArgs: [T],
       fromFields: (fields: Record<string, any>) => UserDeposit.fromFields(T, fields),
       fromFieldsWithTypes: (item: FieldsWithTypes) => UserDeposit.fromFieldsWithTypes(T, item),
-      fromBcs: (data: Uint8Array) => UserDeposit.fromBcs(T, data),
-      bcs: UserDeposit.bcs,
+      fromBcs: (data: Uint8Array) => UserDeposit.fromFields(T, reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
       fromJSONField: (field: any) => UserDeposit.fromJSONField(T, field),
       fromJSON: (json: Record<string, any>) => UserDeposit.fromJSON(T, json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => UserDeposit.fromCoreObject(T, obj),
       fromSuiParsedData: (content: SuiParsedData) => UserDeposit.fromSuiParsedData(T, content),
       fromSuiObjectData: (content: SuiObjectData) => UserDeposit.fromSuiObjectData(T, content),
-      fetch: async (client: SuiClient, id: string) => UserDeposit.fetch(client, T, id),
+      fetch: async (client: ClientWithCoreApi, id: string) => UserDeposit.fetch(client, T, id),
       new: (fields: UserDepositFields<ToPhantomTypeArgument<T>>) => {
         return new UserDeposit([extractType(T)], fields);
       },
@@ -88,7 +115,7 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
     };
   }
 
-  static get r() {
+  static get r(): typeof UserDeposit.reified {
     return UserDeposit.reified;
   }
 
@@ -97,16 +124,26 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
   ): PhantomReified<ToTypeStr<UserDeposit<ToPhantomTypeArgument<T>>>> {
     return phantom(UserDeposit.reified(T));
   }
-  static get p() {
+
+  static get p(): typeof UserDeposit.phantom {
     return UserDeposit.phantom;
   }
 
-  static get bcs() {
+  private static instantiateBcs() {
     return bcs.struct("UserDeposit", {
       id: UID.bcs,
       lp_amount: bcs.u64(),
       reward_debt: bcs.u64(),
     });
+  }
+
+  private static cachedBcs: ReturnType<typeof UserDeposit.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof UserDeposit.instantiateBcs> {
+    if (!UserDeposit.cachedBcs) {
+      UserDeposit.cachedBcs = UserDeposit.instantiateBcs();
+    }
+    return UserDeposit.cachedBcs;
   }
 
   static fromFields<T extends PhantomReified<PhantomTypeArgument>>(
@@ -143,7 +180,7 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
     return UserDeposit.fromFields(typeArg, UserDeposit.bcs.parse(data));
   }
 
-  toJSONField() {
+  toJSONField(): UserDepositJSONField<T> {
     return {
       id: this.id,
       lpAmount: this.lpAmount.toString(),
@@ -151,12 +188,8 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
     };
   }
 
-  toJSON() {
-    return {
-      $typeName: this.$typeName,
-      $typeArgs: this.$typeArgs,
-      ...this.toJSONField(),
-    };
+  toJSON(): UserDepositJSON<T> {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
   }
 
   static fromJSONField<T extends PhantomReified<PhantomTypeArgument>>(
@@ -175,13 +208,41 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
     json: Record<string, any>
   ): UserDeposit<ToPhantomTypeArgument<T>> {
     if (json.$typeName !== UserDeposit.$typeName) {
-      throw new Error("not a WithTwoGenerics json object");
+      throw new Error(`not a UserDeposit json object: expected '${UserDeposit.$typeName}' but got '${json.$typeName}'`);
     }
-    assertReifiedTypeArgsMatch(composeSuiType(UserDeposit.$typeName, extractType(typeArg)), json.$typeArgs, [typeArg]);
+    assertReifiedTypeArgsMatch(composeSuiType(UserDeposit.$typeName, ...[extractType(typeArg)]), json.$typeArgs, [
+      typeArg,
+    ]);
 
     return UserDeposit.fromJSONField(typeArg, json);
   }
 
+  static fromCoreObject<T extends PhantomReified<PhantomTypeArgument>>(
+    typeArg: T,
+    obj: SuiClientTypes.Object<{ content: true }>
+  ): UserDeposit<ToPhantomTypeArgument<T>> {
+    if (!isUserDeposit(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a UserDeposit object`);
+    }
+
+    const gotTypeArgs = parseTypeName(obj.type).typeArgs;
+    if (gotTypeArgs.length !== 1) {
+      throw new Error(`type argument mismatch: expected 1 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 1; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType([typeArg][i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return UserDeposit.fromBcs(typeArg, obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link UserDeposit.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiParsedData<T extends PhantomReified<PhantomTypeArgument>>(
     typeArg: T,
     content: SuiParsedData
@@ -195,6 +256,7 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
     return UserDeposit.fromFieldsWithTypes(typeArg, content);
   }
 
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link UserDeposit.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiObjectData<T extends PhantomReified<PhantomTypeArgument>>(
     typeArg: T,
     data: SuiObjectData
@@ -206,15 +268,19 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
 
       const gotTypeArgs = parseTypeName(data.bcs.type).typeArgs;
       if (gotTypeArgs.length !== 1) {
-        throw new Error(`type argument mismatch: expected 1 type argument but got '${gotTypeArgs.length}'`);
+        throw new Error(`type argument mismatch: expected 1 type arguments but got '${gotTypeArgs.length}'`);
       }
-      const gotTypeArg = compressSuiType(gotTypeArgs[0]);
-      const expectedTypeArg = compressSuiType(extractType(typeArg));
-      if (gotTypeArg !== compressSuiType(extractType(typeArg))) {
-        throw new Error(`type argument mismatch: expected '${expectedTypeArg}' but got '${gotTypeArg}'`);
+      for (let i = 0; i < 1; i++) {
+        const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+        const expectedTypeArg = compressSuiType(extractType([typeArg][i]));
+        if (gotTypeArg !== expectedTypeArg) {
+          throw new Error(
+            `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+          );
+        }
       }
 
-      return UserDeposit.fromBcs(typeArg, fromB64(data.bcs.bcsBytes));
+      return UserDeposit.fromBcs(typeArg, fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return UserDeposit.fromSuiParsedData(typeArg, data.content);
@@ -225,18 +291,32 @@ export class UserDeposit<T extends PhantomTypeArgument> implements StructClass {
   }
 
   static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-    client: SuiClient,
+    client: ClientWithCoreApi,
     typeArg: T,
     id: string
   ): Promise<UserDeposit<ToPhantomTypeArgument<T>>> {
-    const res = await client.getObject({ id, options: { showBcs: true } });
-    if (res.error) {
-      throw new Error(`error fetching UserDeposit object at id ${id}: ${res.error.code}`);
-    }
-    if (res.data?.bcs?.dataType !== "moveObject" || !isUserDeposit(res.data.bcs.type)) {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isUserDeposit(object.type)) {
       throw new Error(`object at id ${id} is not a UserDeposit object`);
     }
 
-    return UserDeposit.fromSuiObjectData(typeArg, res.data);
+    const gotTypeArgs = parseTypeName(object.type).typeArgs;
+    if (gotTypeArgs.length !== 1) {
+      throw new Error(`type argument mismatch: expected 1 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 1; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType([typeArg][i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return UserDeposit.fromBcs(typeArg, object.content);
   }
 }

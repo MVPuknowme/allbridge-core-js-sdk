@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import { bcs, BcsType } from "@mysten/sui/bcs";
 import {
   Transaction,
@@ -23,7 +22,7 @@ export type GenericArg =
   | Array<PureArg>
   | Array<GenericArg>;
 
-export function splitGenericParameters(str: string, genericSeparators: [string, string] = ["<", ">"]) {
+export function splitGenericParameters(str: string, genericSeparators: [string, string] = ["<", ">"]): string[] {
   const [left, right] = genericSeparators;
   const tok: string[] = [];
   let word = "";
@@ -50,10 +49,7 @@ export function splitGenericParameters(str: string, genericSeparators: [string, 
   return tok;
 }
 
-export function parseTypeName(name: string): {
-  typeName: string;
-  typeArgs: string[];
-} {
+export function parseTypeName(name: string): { typeName: string; typeArgs: string[] } {
   if (typeof name !== "string") {
     throw new Error(`Illegal type passed as a name of the type: ${name}`);
   }
@@ -87,12 +83,15 @@ export function isTransactionArgument(arg: GenericArg): arg is TransactionArgume
   return "GasCoin" in arg || "Input" in arg || "Result" in arg || "NestedResult" in arg;
 }
 
-export function obj(tx: Transaction, arg: TransactionObjectInput) {
+export function obj(tx: Transaction, arg: TransactionObjectInput): TransactionArgument {
   return isTransactionArgument(arg) ? arg : tx.object(arg);
 }
 
 export function pure(tx: Transaction, arg: PureArg, type: string): TransactionArgument {
   if (isTransactionArgument(arg)) {
+    if (typeof arg === "function") {
+      throw new Error("Transaction plugins are not supported");
+    }
     return obj(tx, arg);
   }
 
@@ -232,7 +231,7 @@ export function pure(tx: Transaction, arg: PureArg, type: string): TransactionAr
   }
 }
 
-export function option(tx: Transaction, type: string, arg: GenericArg | null) {
+export function option(tx: Transaction, type: string, arg: GenericArg | null): TransactionArgument {
   if (isTransactionArgument(arg)) {
     return arg;
   }
@@ -258,7 +257,7 @@ export function option(tx: Transaction, type: string, arg: GenericArg | null) {
   });
 }
 
-export function generic(tx: Transaction, type: string, arg: GenericArg) {
+export function generic(tx: Transaction, type: string, arg: GenericArg): TransactionArgument {
   if (typeArgIsPure(type)) {
     return pure(tx, arg as PureArg | TransactionArgument, type);
   } else {
@@ -276,7 +275,11 @@ export function generic(tx: Transaction, type: string, arg: GenericArg) {
   }
 }
 
-export function vector(tx: Transaction, itemType: string, items: Array<GenericArg> | TransactionArgument) {
+export function vector(
+  tx: Transaction,
+  itemType: string,
+  items: Array<GenericArg> | TransactionArgument
+): TransactionArgument {
   if (typeof items === "function") {
     throw new Error("Transaction plugins are not supported");
   }

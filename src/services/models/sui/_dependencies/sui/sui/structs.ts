@@ -1,0 +1,214 @@
+// @ts-nocheck
+/**
+ * Coin<SUI> is the token used to pay for gas in Sui.
+ * It has 9 decimals, and the smallest unit (10^-9) is called "mist".
+ */
+
+import { bcs } from "@mysten/sui/bcs";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
+import {
+  decodeFromFields,
+  decodeFromFieldsWithTypes,
+  decodeFromJSONField,
+  phantom,
+  PhantomReified,
+  Reified,
+  StructClass,
+  ToField,
+  ToJSON,
+  ToTypeStr,
+} from "../../../_framework/reified";
+import { composeSuiType, compressSuiType, FieldsWithTypes } from "../../../_framework/util";
+
+/* ============================== SUI =============================== */
+
+export function isSUI(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `0x2::sui::SUI`;
+}
+
+export interface SUIFields {
+  dummyField: ToField<"bool">;
+}
+
+export type SUIReified = Reified<SUI, SUIFields>;
+
+export type SUIJSONField = {
+  dummyField: boolean;
+};
+
+export type SUIJSON = {
+  $typeName: typeof SUI.$typeName;
+  $typeArgs: [];
+} & SUIJSONField;
+
+/** Name of the coin */
+export class SUI implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::sui::SUI` = `0x2::sui::SUI` as const;
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof SUI.$typeName = SUI.$typeName;
+  readonly $fullTypeName: `0x2::sui::SUI`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof SUI.$isPhantom = SUI.$isPhantom;
+
+  readonly dummyField: ToField<"bool">;
+
+  private constructor(typeArgs: [], fields: SUIFields) {
+    this.$fullTypeName = composeSuiType(SUI.$typeName, ...typeArgs) as `0x2::sui::SUI`;
+    this.$typeArgs = typeArgs;
+
+    this.dummyField = fields.dummyField;
+  }
+
+  static reified(): SUIReified {
+    const reifiedBcs = SUI.bcs;
+    return {
+      get typeName() {
+        return SUI.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(SUI.$typeName, ...[]) as `0x2::sui::SUI`;
+      },
+      typeArgs: [] as [],
+      isPhantom: SUI.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => SUI.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => SUI.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => SUI.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => SUI.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => SUI.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => SUI.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => SUI.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => SUI.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => SUI.fetch(client, id),
+      new: (fields: SUIFields) => {
+        return new SUI([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): SUIReified {
+    return SUI.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<SUI>> {
+    return phantom(SUI.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<SUI>> {
+    return SUI.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("SUI", {
+      dummy_field: bcs.bool(),
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof SUI.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof SUI.instantiateBcs> {
+    if (!SUI.cachedBcs) {
+      SUI.cachedBcs = SUI.instantiateBcs();
+    }
+    return SUI.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): SUI {
+    return SUI.reified().new({
+      dummyField: decodeFromFields("bool", fields.dummy_field),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): SUI {
+    if (!isSUI(item.type)) {
+      throw new Error("not a SUI type");
+    }
+
+    return SUI.reified().new({
+      dummyField: decodeFromFieldsWithTypes("bool", item.fields.dummy_field),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): SUI {
+    return SUI.fromFields(SUI.bcs.parse(data));
+  }
+
+  toJSONField(): SUIJSONField {
+    return {
+      dummyField: this.dummyField,
+    };
+  }
+
+  toJSON(): SUIJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): SUI {
+    return SUI.reified().new({
+      dummyField: decodeFromJSONField("bool", field.dummyField),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): SUI {
+    if (json.$typeName !== SUI.$typeName) {
+      throw new Error(`not a SUI json object: expected '${SUI.$typeName}' but got '${json.$typeName}'`);
+    }
+
+    return SUI.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): SUI {
+    if (!isSUI(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a SUI object`);
+    }
+    return SUI.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link SUI.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): SUI {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isSUI(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a SUI object`);
+    }
+    return SUI.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link SUI.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): SUI {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isSUI(data.bcs.type)) {
+        throw new Error(`object at is not a SUI object`);
+      }
+
+      return SUI.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return SUI.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<SUI> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isSUI(object.type)) {
+      throw new Error(`object at id ${id} is not a SUI object`);
+    }
+    return SUI.fromBcs(object.content);
+  }
+}

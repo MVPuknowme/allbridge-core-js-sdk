@@ -1,18 +1,27 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
+import { Transaction, TransactionArgument, TransactionObjectInput, TransactionResult } from "@mysten/sui/transactions";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
 import { obj } from "../../_framework/util";
-import { Transaction, TransactionObjectInput } from "@mysten/sui/transactions";
 
-export function messageReceivedEvent(tx: Transaction, message: TransactionObjectInput) {
+export function messageSentEvent(
+  tx: Transaction,
+  message: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::message_received_event`,
+    target: `${getPublishedAt("messenger", options?.env)}::events::message_sent_event`,
     arguments: [obj(tx, message)],
   });
 }
 
-export function messageSentEvent(tx: Transaction, message: TransactionObjectInput) {
+export function messageReceivedEvent(
+  tx: Transaction,
+  message: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::message_sent_event`,
+    target: `${getPublishedAt("messenger", options?.env)}::events::message_received_event`,
     arguments: [obj(tx, message)],
   });
 }

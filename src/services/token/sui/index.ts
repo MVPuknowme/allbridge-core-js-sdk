@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { CoinStruct, SuiClient } from "@mysten/sui/client";
+import { CoinStruct, SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { ChainType } from "../../../chains/chain.enums";
 import { AllbridgeCoreClient } from "../../../client/core-api/core-client-base";
 import { MethodNotSupportedError, SdkError } from "../../../exceptions";
+import { AllbridgeCoreSdkOptions } from "../../../index";
 import { GetNativeTokenBalanceParams } from "../../bridge/models";
 import { RawTransaction, TransactionResponse } from "../../models";
 import { fetchAllPagesRecursive } from "../../utils/sui/paginated";
@@ -10,15 +11,17 @@ import { ApproveParamsDto, ChainTokenService, GetAllowanceParamsDto, GetTokenBal
 
 export class SuiTokenService extends ChainTokenService {
   chainType: ChainType.SUI = ChainType.SUI;
-  private suiClient: SuiClient;
+  private suiClient: SuiJsonRpcClient;
 
   constructor(
     public suiRpcUrl: string,
+    readonly params: AllbridgeCoreSdkOptions,
     public api: AllbridgeCoreClient
   ) {
     super();
-    this.suiClient = new SuiClient({
+    this.suiClient = new SuiJsonRpcClient({
       url: this.suiRpcUrl,
+      network: params.suiIsTestnet ? "testnet" : "mainnet",
     });
   }
 

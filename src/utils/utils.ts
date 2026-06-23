@@ -30,7 +30,7 @@ export function validateAmountGteZero(amount: BigSource) {
   }
 }
 
-export function validateAmountDecimals(argName: string, amountFloat: number | string | Big, decimalRequired: number) {
+export function validateAmountDecimals(argName: string, amountFloat: BigSource, decimalRequired: number) {
   const amount = Big(amountFloat).toFixed();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [integerPart, fractionalPart] = amount.split(".");

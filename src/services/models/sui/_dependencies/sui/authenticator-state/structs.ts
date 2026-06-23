@@ -1,0 +1,1069 @@
+// @ts-nocheck
+import { bcs } from "@mysten/sui/bcs";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
+import {
+  decodeFromFields,
+  decodeFromFieldsWithTypes,
+  decodeFromJSONField,
+  fieldToJSON,
+  phantom,
+  PhantomReified,
+  Reified,
+  StructClass,
+  ToField,
+  ToJSON,
+  ToTypeStr,
+  vector,
+} from "../../../_framework/reified";
+import { composeSuiType, compressSuiType, FieldsWithTypes } from "../../../_framework/util";
+import { Vector } from "../../../_framework/vector";
+import { String } from "../../std/string/structs";
+import { UID } from "../object/structs";
+
+/* ============================== AuthenticatorState =============================== */
+
+export function isAuthenticatorState(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `0x2::authenticator_state::AuthenticatorState`;
+}
+
+export interface AuthenticatorStateFields {
+  id: ToField<UID>;
+  version: ToField<"u64">;
+}
+
+export type AuthenticatorStateReified = Reified<AuthenticatorState, AuthenticatorStateFields>;
+
+export type AuthenticatorStateJSONField = {
+  id: string;
+  version: string;
+};
+
+export type AuthenticatorStateJSON = {
+  $typeName: typeof AuthenticatorState.$typeName;
+  $typeArgs: [];
+} & AuthenticatorStateJSONField;
+
+/**
+ * Singleton shared object which stores the global authenticator state.
+ * The actual state is stored in a dynamic field of type AuthenticatorStateInner to support
+ * future versions of the authenticator state.
+ */
+export class AuthenticatorState implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::authenticator_state::AuthenticatorState` =
+    `0x2::authenticator_state::AuthenticatorState` as const;
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof AuthenticatorState.$typeName = AuthenticatorState.$typeName;
+  readonly $fullTypeName: `0x2::authenticator_state::AuthenticatorState`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof AuthenticatorState.$isPhantom = AuthenticatorState.$isPhantom;
+
+  readonly id: ToField<UID>;
+  readonly version: ToField<"u64">;
+
+  private constructor(typeArgs: [], fields: AuthenticatorStateFields) {
+    this.$fullTypeName = composeSuiType(
+      AuthenticatorState.$typeName,
+      ...typeArgs
+    ) as `0x2::authenticator_state::AuthenticatorState`;
+    this.$typeArgs = typeArgs;
+
+    this.id = fields.id;
+    this.version = fields.version;
+  }
+
+  static reified(): AuthenticatorStateReified {
+    const reifiedBcs = AuthenticatorState.bcs;
+    return {
+      get typeName() {
+        return AuthenticatorState.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(AuthenticatorState.$typeName, ...[]) as `0x2::authenticator_state::AuthenticatorState`;
+      },
+      typeArgs: [] as [],
+      isPhantom: AuthenticatorState.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => AuthenticatorState.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => AuthenticatorState.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => AuthenticatorState.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => AuthenticatorState.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => AuthenticatorState.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => AuthenticatorState.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => AuthenticatorState.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => AuthenticatorState.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => AuthenticatorState.fetch(client, id),
+      new: (fields: AuthenticatorStateFields) => {
+        return new AuthenticatorState([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): AuthenticatorStateReified {
+    return AuthenticatorState.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<AuthenticatorState>> {
+    return phantom(AuthenticatorState.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<AuthenticatorState>> {
+    return AuthenticatorState.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("AuthenticatorState", {
+      id: UID.bcs,
+      version: bcs.u64(),
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof AuthenticatorState.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof AuthenticatorState.instantiateBcs> {
+    if (!AuthenticatorState.cachedBcs) {
+      AuthenticatorState.cachedBcs = AuthenticatorState.instantiateBcs();
+    }
+    return AuthenticatorState.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): AuthenticatorState {
+    return AuthenticatorState.reified().new({
+      id: decodeFromFields(UID.reified(), fields.id),
+      version: decodeFromFields("u64", fields.version),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): AuthenticatorState {
+    if (!isAuthenticatorState(item.type)) {
+      throw new Error("not a AuthenticatorState type");
+    }
+
+    return AuthenticatorState.reified().new({
+      id: decodeFromFieldsWithTypes(UID.reified(), item.fields.id),
+      version: decodeFromFieldsWithTypes("u64", item.fields.version),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): AuthenticatorState {
+    return AuthenticatorState.fromFields(AuthenticatorState.bcs.parse(data));
+  }
+
+  toJSONField(): AuthenticatorStateJSONField {
+    return {
+      id: this.id,
+      version: this.version.toString(),
+    };
+  }
+
+  toJSON(): AuthenticatorStateJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): AuthenticatorState {
+    return AuthenticatorState.reified().new({
+      id: decodeFromJSONField(UID.reified(), field.id),
+      version: decodeFromJSONField("u64", field.version),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): AuthenticatorState {
+    if (json.$typeName !== AuthenticatorState.$typeName) {
+      throw new Error(
+        `not a AuthenticatorState json object: expected '${AuthenticatorState.$typeName}' but got '${json.$typeName}'`
+      );
+    }
+
+    return AuthenticatorState.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): AuthenticatorState {
+    if (!isAuthenticatorState(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a AuthenticatorState object`);
+    }
+    return AuthenticatorState.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link AuthenticatorState.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): AuthenticatorState {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isAuthenticatorState(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a AuthenticatorState object`);
+    }
+    return AuthenticatorState.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link AuthenticatorState.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): AuthenticatorState {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isAuthenticatorState(data.bcs.type)) {
+        throw new Error(`object at is not a AuthenticatorState object`);
+      }
+
+      return AuthenticatorState.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return AuthenticatorState.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<AuthenticatorState> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isAuthenticatorState(object.type)) {
+      throw new Error(`object at id ${id} is not a AuthenticatorState object`);
+    }
+    return AuthenticatorState.fromBcs(object.content);
+  }
+}
+
+/* ============================== AuthenticatorStateInner =============================== */
+
+export function isAuthenticatorStateInner(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `0x2::authenticator_state::AuthenticatorStateInner`;
+}
+
+export interface AuthenticatorStateInnerFields {
+  version: ToField<"u64">;
+  /** List of currently active JWKs. */
+  activeJwks: ToField<Vector<ActiveJwk>>;
+}
+
+export type AuthenticatorStateInnerReified = Reified<AuthenticatorStateInner, AuthenticatorStateInnerFields>;
+
+export type AuthenticatorStateInnerJSONField = {
+  version: string;
+  activeJwks: ToJSON<ActiveJwk>[];
+};
+
+export type AuthenticatorStateInnerJSON = {
+  $typeName: typeof AuthenticatorStateInner.$typeName;
+  $typeArgs: [];
+} & AuthenticatorStateInnerJSONField;
+
+export class AuthenticatorStateInner implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::authenticator_state::AuthenticatorStateInner` =
+    `0x2::authenticator_state::AuthenticatorStateInner` as const;
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof AuthenticatorStateInner.$typeName = AuthenticatorStateInner.$typeName;
+  readonly $fullTypeName: `0x2::authenticator_state::AuthenticatorStateInner`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof AuthenticatorStateInner.$isPhantom = AuthenticatorStateInner.$isPhantom;
+
+  readonly version: ToField<"u64">;
+  /** List of currently active JWKs. */
+  readonly activeJwks: ToField<Vector<ActiveJwk>>;
+
+  private constructor(typeArgs: [], fields: AuthenticatorStateInnerFields) {
+    this.$fullTypeName = composeSuiType(
+      AuthenticatorStateInner.$typeName,
+      ...typeArgs
+    ) as `0x2::authenticator_state::AuthenticatorStateInner`;
+    this.$typeArgs = typeArgs;
+
+    this.version = fields.version;
+    this.activeJwks = fields.activeJwks;
+  }
+
+  static reified(): AuthenticatorStateInnerReified {
+    const reifiedBcs = AuthenticatorStateInner.bcs;
+    return {
+      get typeName() {
+        return AuthenticatorStateInner.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(
+          AuthenticatorStateInner.$typeName,
+          ...[]
+        ) as `0x2::authenticator_state::AuthenticatorStateInner`;
+      },
+      typeArgs: [] as [],
+      isPhantom: AuthenticatorStateInner.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => AuthenticatorStateInner.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => AuthenticatorStateInner.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => AuthenticatorStateInner.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => AuthenticatorStateInner.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => AuthenticatorStateInner.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => AuthenticatorStateInner.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => AuthenticatorStateInner.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => AuthenticatorStateInner.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => AuthenticatorStateInner.fetch(client, id),
+      new: (fields: AuthenticatorStateInnerFields) => {
+        return new AuthenticatorStateInner([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): AuthenticatorStateInnerReified {
+    return AuthenticatorStateInner.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<AuthenticatorStateInner>> {
+    return phantom(AuthenticatorStateInner.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<AuthenticatorStateInner>> {
+    return AuthenticatorStateInner.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("AuthenticatorStateInner", {
+      version: bcs.u64(),
+      active_jwks: bcs.vector(ActiveJwk.bcs),
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof AuthenticatorStateInner.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof AuthenticatorStateInner.instantiateBcs> {
+    if (!AuthenticatorStateInner.cachedBcs) {
+      AuthenticatorStateInner.cachedBcs = AuthenticatorStateInner.instantiateBcs();
+    }
+    return AuthenticatorStateInner.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): AuthenticatorStateInner {
+    return AuthenticatorStateInner.reified().new({
+      version: decodeFromFields("u64", fields.version),
+      activeJwks: decodeFromFields(vector(ActiveJwk.reified()), fields.active_jwks),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): AuthenticatorStateInner {
+    if (!isAuthenticatorStateInner(item.type)) {
+      throw new Error("not a AuthenticatorStateInner type");
+    }
+
+    return AuthenticatorStateInner.reified().new({
+      version: decodeFromFieldsWithTypes("u64", item.fields.version),
+      activeJwks: decodeFromFieldsWithTypes(vector(ActiveJwk.reified()), item.fields.active_jwks),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): AuthenticatorStateInner {
+    return AuthenticatorStateInner.fromFields(AuthenticatorStateInner.bcs.parse(data));
+  }
+
+  toJSONField(): AuthenticatorStateInnerJSONField {
+    return {
+      version: this.version.toString(),
+      activeJwks: fieldToJSON<Vector<ActiveJwk>>(`vector<${ActiveJwk.$typeName}>`, this.activeJwks),
+    };
+  }
+
+  toJSON(): AuthenticatorStateInnerJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): AuthenticatorStateInner {
+    return AuthenticatorStateInner.reified().new({
+      version: decodeFromJSONField("u64", field.version),
+      activeJwks: decodeFromJSONField(vector(ActiveJwk.reified()), field.activeJwks),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): AuthenticatorStateInner {
+    if (json.$typeName !== AuthenticatorStateInner.$typeName) {
+      throw new Error(
+        `not a AuthenticatorStateInner json object: expected '${AuthenticatorStateInner.$typeName}' but got '${json.$typeName}'`
+      );
+    }
+
+    return AuthenticatorStateInner.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): AuthenticatorStateInner {
+    if (!isAuthenticatorStateInner(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a AuthenticatorStateInner object`);
+    }
+    return AuthenticatorStateInner.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link AuthenticatorStateInner.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): AuthenticatorStateInner {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isAuthenticatorStateInner(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a AuthenticatorStateInner object`);
+    }
+    return AuthenticatorStateInner.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link AuthenticatorStateInner.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): AuthenticatorStateInner {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isAuthenticatorStateInner(data.bcs.type)) {
+        throw new Error(`object at is not a AuthenticatorStateInner object`);
+      }
+
+      return AuthenticatorStateInner.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return AuthenticatorStateInner.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<AuthenticatorStateInner> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isAuthenticatorStateInner(object.type)) {
+      throw new Error(`object at id ${id} is not a AuthenticatorStateInner object`);
+    }
+    return AuthenticatorStateInner.fromBcs(object.content);
+  }
+}
+
+/* ============================== JWK =============================== */
+
+export function isJWK(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `0x2::authenticator_state::JWK`;
+}
+
+export interface JWKFields {
+  kty: ToField<String>;
+  e: ToField<String>;
+  n: ToField<String>;
+  alg: ToField<String>;
+}
+
+export type JWKReified = Reified<JWK, JWKFields>;
+
+export type JWKJSONField = {
+  kty: string;
+  e: string;
+  n: string;
+  alg: string;
+};
+
+export type JWKJSON = {
+  $typeName: typeof JWK.$typeName;
+  $typeArgs: [];
+} & JWKJSONField;
+
+/** Must match the JWK struct in fastcrypto-zkp */
+export class JWK implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::authenticator_state::JWK` = `0x2::authenticator_state::JWK` as const;
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof JWK.$typeName = JWK.$typeName;
+  readonly $fullTypeName: `0x2::authenticator_state::JWK`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof JWK.$isPhantom = JWK.$isPhantom;
+
+  readonly kty: ToField<String>;
+  readonly e: ToField<String>;
+  readonly n: ToField<String>;
+  readonly alg: ToField<String>;
+
+  private constructor(typeArgs: [], fields: JWKFields) {
+    this.$fullTypeName = composeSuiType(JWK.$typeName, ...typeArgs) as `0x2::authenticator_state::JWK`;
+    this.$typeArgs = typeArgs;
+
+    this.kty = fields.kty;
+    this.e = fields.e;
+    this.n = fields.n;
+    this.alg = fields.alg;
+  }
+
+  static reified(): JWKReified {
+    const reifiedBcs = JWK.bcs;
+    return {
+      get typeName() {
+        return JWK.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(JWK.$typeName, ...[]) as `0x2::authenticator_state::JWK`;
+      },
+      typeArgs: [] as [],
+      isPhantom: JWK.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => JWK.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => JWK.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => JWK.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => JWK.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => JWK.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => JWK.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => JWK.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => JWK.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => JWK.fetch(client, id),
+      new: (fields: JWKFields) => {
+        return new JWK([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): JWKReified {
+    return JWK.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<JWK>> {
+    return phantom(JWK.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<JWK>> {
+    return JWK.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("JWK", {
+      kty: String.bcs,
+      e: String.bcs,
+      n: String.bcs,
+      alg: String.bcs,
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof JWK.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof JWK.instantiateBcs> {
+    if (!JWK.cachedBcs) {
+      JWK.cachedBcs = JWK.instantiateBcs();
+    }
+    return JWK.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): JWK {
+    return JWK.reified().new({
+      kty: decodeFromFields(String.reified(), fields.kty),
+      e: decodeFromFields(String.reified(), fields.e),
+      n: decodeFromFields(String.reified(), fields.n),
+      alg: decodeFromFields(String.reified(), fields.alg),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): JWK {
+    if (!isJWK(item.type)) {
+      throw new Error("not a JWK type");
+    }
+
+    return JWK.reified().new({
+      kty: decodeFromFieldsWithTypes(String.reified(), item.fields.kty),
+      e: decodeFromFieldsWithTypes(String.reified(), item.fields.e),
+      n: decodeFromFieldsWithTypes(String.reified(), item.fields.n),
+      alg: decodeFromFieldsWithTypes(String.reified(), item.fields.alg),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): JWK {
+    return JWK.fromFields(JWK.bcs.parse(data));
+  }
+
+  toJSONField(): JWKJSONField {
+    return {
+      kty: this.kty,
+      e: this.e,
+      n: this.n,
+      alg: this.alg,
+    };
+  }
+
+  toJSON(): JWKJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): JWK {
+    return JWK.reified().new({
+      kty: decodeFromJSONField(String.reified(), field.kty),
+      e: decodeFromJSONField(String.reified(), field.e),
+      n: decodeFromJSONField(String.reified(), field.n),
+      alg: decodeFromJSONField(String.reified(), field.alg),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): JWK {
+    if (json.$typeName !== JWK.$typeName) {
+      throw new Error(`not a JWK json object: expected '${JWK.$typeName}' but got '${json.$typeName}'`);
+    }
+
+    return JWK.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): JWK {
+    if (!isJWK(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a JWK object`);
+    }
+    return JWK.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link JWK.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): JWK {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isJWK(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a JWK object`);
+    }
+    return JWK.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link JWK.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): JWK {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isJWK(data.bcs.type)) {
+        throw new Error(`object at is not a JWK object`);
+      }
+
+      return JWK.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return JWK.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<JWK> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isJWK(object.type)) {
+      throw new Error(`object at id ${id} is not a JWK object`);
+    }
+    return JWK.fromBcs(object.content);
+  }
+}
+
+/* ============================== JwkId =============================== */
+
+export function isJwkId(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `0x2::authenticator_state::JwkId`;
+}
+
+export interface JwkIdFields {
+  iss: ToField<String>;
+  kid: ToField<String>;
+}
+
+export type JwkIdReified = Reified<JwkId, JwkIdFields>;
+
+export type JwkIdJSONField = {
+  iss: string;
+  kid: string;
+};
+
+export type JwkIdJSON = {
+  $typeName: typeof JwkId.$typeName;
+  $typeArgs: [];
+} & JwkIdJSONField;
+
+/** Must match the JwkId struct in fastcrypto-zkp */
+export class JwkId implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::authenticator_state::JwkId` = `0x2::authenticator_state::JwkId` as const;
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof JwkId.$typeName = JwkId.$typeName;
+  readonly $fullTypeName: `0x2::authenticator_state::JwkId`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof JwkId.$isPhantom = JwkId.$isPhantom;
+
+  readonly iss: ToField<String>;
+  readonly kid: ToField<String>;
+
+  private constructor(typeArgs: [], fields: JwkIdFields) {
+    this.$fullTypeName = composeSuiType(JwkId.$typeName, ...typeArgs) as `0x2::authenticator_state::JwkId`;
+    this.$typeArgs = typeArgs;
+
+    this.iss = fields.iss;
+    this.kid = fields.kid;
+  }
+
+  static reified(): JwkIdReified {
+    const reifiedBcs = JwkId.bcs;
+    return {
+      get typeName() {
+        return JwkId.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(JwkId.$typeName, ...[]) as `0x2::authenticator_state::JwkId`;
+      },
+      typeArgs: [] as [],
+      isPhantom: JwkId.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => JwkId.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => JwkId.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => JwkId.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => JwkId.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => JwkId.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => JwkId.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => JwkId.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => JwkId.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => JwkId.fetch(client, id),
+      new: (fields: JwkIdFields) => {
+        return new JwkId([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): JwkIdReified {
+    return JwkId.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<JwkId>> {
+    return phantom(JwkId.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<JwkId>> {
+    return JwkId.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("JwkId", {
+      iss: String.bcs,
+      kid: String.bcs,
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof JwkId.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof JwkId.instantiateBcs> {
+    if (!JwkId.cachedBcs) {
+      JwkId.cachedBcs = JwkId.instantiateBcs();
+    }
+    return JwkId.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): JwkId {
+    return JwkId.reified().new({
+      iss: decodeFromFields(String.reified(), fields.iss),
+      kid: decodeFromFields(String.reified(), fields.kid),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): JwkId {
+    if (!isJwkId(item.type)) {
+      throw new Error("not a JwkId type");
+    }
+
+    return JwkId.reified().new({
+      iss: decodeFromFieldsWithTypes(String.reified(), item.fields.iss),
+      kid: decodeFromFieldsWithTypes(String.reified(), item.fields.kid),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): JwkId {
+    return JwkId.fromFields(JwkId.bcs.parse(data));
+  }
+
+  toJSONField(): JwkIdJSONField {
+    return {
+      iss: this.iss,
+      kid: this.kid,
+    };
+  }
+
+  toJSON(): JwkIdJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): JwkId {
+    return JwkId.reified().new({
+      iss: decodeFromJSONField(String.reified(), field.iss),
+      kid: decodeFromJSONField(String.reified(), field.kid),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): JwkId {
+    if (json.$typeName !== JwkId.$typeName) {
+      throw new Error(`not a JwkId json object: expected '${JwkId.$typeName}' but got '${json.$typeName}'`);
+    }
+
+    return JwkId.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): JwkId {
+    if (!isJwkId(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a JwkId object`);
+    }
+    return JwkId.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link JwkId.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): JwkId {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isJwkId(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a JwkId object`);
+    }
+    return JwkId.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link JwkId.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): JwkId {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isJwkId(data.bcs.type)) {
+        throw new Error(`object at is not a JwkId object`);
+      }
+
+      return JwkId.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return JwkId.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<JwkId> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isJwkId(object.type)) {
+      throw new Error(`object at id ${id} is not a JwkId object`);
+    }
+    return JwkId.fromBcs(object.content);
+  }
+}
+
+/* ============================== ActiveJwk =============================== */
+
+export function isActiveJwk(type: string): boolean {
+  type = compressSuiType(type);
+  return type === `0x2::authenticator_state::ActiveJwk`;
+}
+
+export interface ActiveJwkFields {
+  jwkId: ToField<JwkId>;
+  jwk: ToField<JWK>;
+  epoch: ToField<"u64">;
+}
+
+export type ActiveJwkReified = Reified<ActiveJwk, ActiveJwkFields>;
+
+export type ActiveJwkJSONField = {
+  jwkId: ToJSON<JwkId>;
+  jwk: ToJSON<JWK>;
+  epoch: string;
+};
+
+export type ActiveJwkJSON = {
+  $typeName: typeof ActiveJwk.$typeName;
+  $typeArgs: [];
+} & ActiveJwkJSONField;
+
+export class ActiveJwk implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::authenticator_state::ActiveJwk` = `0x2::authenticator_state::ActiveJwk` as const;
+  static readonly $numTypeParams = 0;
+  static readonly $isPhantom = [] as const;
+
+  readonly $typeName: typeof ActiveJwk.$typeName = ActiveJwk.$typeName;
+  readonly $fullTypeName: `0x2::authenticator_state::ActiveJwk`;
+  readonly $typeArgs: [];
+  readonly $isPhantom: typeof ActiveJwk.$isPhantom = ActiveJwk.$isPhantom;
+
+  readonly jwkId: ToField<JwkId>;
+  readonly jwk: ToField<JWK>;
+  readonly epoch: ToField<"u64">;
+
+  private constructor(typeArgs: [], fields: ActiveJwkFields) {
+    this.$fullTypeName = composeSuiType(ActiveJwk.$typeName, ...typeArgs) as `0x2::authenticator_state::ActiveJwk`;
+    this.$typeArgs = typeArgs;
+
+    this.jwkId = fields.jwkId;
+    this.jwk = fields.jwk;
+    this.epoch = fields.epoch;
+  }
+
+  static reified(): ActiveJwkReified {
+    const reifiedBcs = ActiveJwk.bcs;
+    return {
+      get typeName() {
+        return ActiveJwk.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(ActiveJwk.$typeName, ...[]) as `0x2::authenticator_state::ActiveJwk`;
+      },
+      typeArgs: [] as [],
+      isPhantom: ActiveJwk.$isPhantom,
+      reifiedTypeArgs: [],
+      fromFields: (fields: Record<string, any>) => ActiveJwk.fromFields(fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => ActiveJwk.fromFieldsWithTypes(item),
+      fromBcs: (data: Uint8Array) => ActiveJwk.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => ActiveJwk.fromJSONField(field),
+      fromJSON: (json: Record<string, any>) => ActiveJwk.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => ActiveJwk.fromCoreObject(obj),
+      fromSuiParsedData: (content: SuiParsedData) => ActiveJwk.fromSuiParsedData(content),
+      fromSuiObjectData: (content: SuiObjectData) => ActiveJwk.fromSuiObjectData(content),
+      fetch: async (client: ClientWithCoreApi, id: string) => ActiveJwk.fetch(client, id),
+      new: (fields: ActiveJwkFields) => {
+        return new ActiveJwk([], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): ActiveJwkReified {
+    return ActiveJwk.reified();
+  }
+
+  static phantom(): PhantomReified<ToTypeStr<ActiveJwk>> {
+    return phantom(ActiveJwk.reified());
+  }
+
+  static get p(): PhantomReified<ToTypeStr<ActiveJwk>> {
+    return ActiveJwk.phantom();
+  }
+
+  private static instantiateBcs() {
+    return bcs.struct("ActiveJwk", {
+      jwk_id: JwkId.bcs,
+      jwk: JWK.bcs,
+      epoch: bcs.u64(),
+    });
+  }
+
+  private static cachedBcs: ReturnType<typeof ActiveJwk.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof ActiveJwk.instantiateBcs> {
+    if (!ActiveJwk.cachedBcs) {
+      ActiveJwk.cachedBcs = ActiveJwk.instantiateBcs();
+    }
+    return ActiveJwk.cachedBcs;
+  }
+
+  static fromFields(fields: Record<string, any>): ActiveJwk {
+    return ActiveJwk.reified().new({
+      jwkId: decodeFromFields(JwkId.reified(), fields.jwk_id),
+      jwk: decodeFromFields(JWK.reified(), fields.jwk),
+      epoch: decodeFromFields("u64", fields.epoch),
+    });
+  }
+
+  static fromFieldsWithTypes(item: FieldsWithTypes): ActiveJwk {
+    if (!isActiveJwk(item.type)) {
+      throw new Error("not a ActiveJwk type");
+    }
+
+    return ActiveJwk.reified().new({
+      jwkId: decodeFromFieldsWithTypes(JwkId.reified(), item.fields.jwk_id),
+      jwk: decodeFromFieldsWithTypes(JWK.reified(), item.fields.jwk),
+      epoch: decodeFromFieldsWithTypes("u64", item.fields.epoch),
+    });
+  }
+
+  static fromBcs(data: Uint8Array): ActiveJwk {
+    return ActiveJwk.fromFields(ActiveJwk.bcs.parse(data));
+  }
+
+  toJSONField(): ActiveJwkJSONField {
+    return {
+      jwkId: this.jwkId.toJSONField(),
+      jwk: this.jwk.toJSONField(),
+      epoch: this.epoch.toString(),
+    };
+  }
+
+  toJSON(): ActiveJwkJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField(field: any): ActiveJwk {
+    return ActiveJwk.reified().new({
+      jwkId: decodeFromJSONField(JwkId.reified(), field.jwkId),
+      jwk: decodeFromJSONField(JWK.reified(), field.jwk),
+      epoch: decodeFromJSONField("u64", field.epoch),
+    });
+  }
+
+  static fromJSON(json: Record<string, any>): ActiveJwk {
+    if (json.$typeName !== ActiveJwk.$typeName) {
+      throw new Error(`not a ActiveJwk json object: expected '${ActiveJwk.$typeName}' but got '${json.$typeName}'`);
+    }
+
+    return ActiveJwk.fromJSONField(json);
+  }
+
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): ActiveJwk {
+    if (!isActiveJwk(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a ActiveJwk object`);
+    }
+    return ActiveJwk.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link ActiveJwk.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData(content: SuiParsedData): ActiveJwk {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isActiveJwk(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a ActiveJwk object`);
+    }
+    return ActiveJwk.fromFieldsWithTypes(content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link ActiveJwk.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData(data: SuiObjectData): ActiveJwk {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isActiveJwk(data.bcs.type)) {
+        throw new Error(`object at is not a ActiveJwk object`);
+      }
+
+      return ActiveJwk.fromBcs(fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return ActiveJwk.fromSuiParsedData(data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<ActiveJwk> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isActiveJwk(object.type)) {
+      throw new Error(`object at id ${id} is not a ActiveJwk object`);
+    }
+    return ActiveJwk.fromBcs(object.content);
+  }
+}

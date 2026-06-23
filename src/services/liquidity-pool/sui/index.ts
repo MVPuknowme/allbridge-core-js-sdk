@@ -1,8 +1,9 @@
-import { CoinStruct, SuiObjectResponse, SuiClient } from "@mysten/sui/client";
+import { CoinStruct, SuiObjectResponse, SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { ChainType } from "../../../chains/chain.enums";
 import { AllbridgeCoreClient } from "../../../client/core-api/core-client-base";
 import { InvalidAmountError, SdkError } from "../../../exceptions";
+import { AllbridgeCoreSdkOptions } from "../../../index";
 import { PoolInfo, TokenWithChainDetails } from "../../../tokens-info";
 import { calculatePoolInfoImbalance } from "../../../utils/calculation";
 import { RawSuiTransaction } from "../../models";
@@ -31,15 +32,17 @@ import {
 export class SuiPoolService extends ChainPoolService {
   chainType: ChainType.SUI = ChainType.SUI;
 
-  private readonly client: SuiClient;
+  private readonly client: SuiJsonRpcClient;
 
   constructor(
     public suiRpcUrl: string,
+    readonly params: AllbridgeCoreSdkOptions,
     public api: AllbridgeCoreClient
   ) {
     super();
-    this.client = new SuiClient({
+    this.client = new SuiJsonRpcClient({
       url: suiRpcUrl,
+      network: params.suiIsTestnet ? "testnet" : "mainnet",
     });
   }
 

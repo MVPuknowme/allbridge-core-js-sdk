@@ -86,6 +86,8 @@ export interface AllbridgeCoreSdkOptions {
    */
   additionalChainsProperties?: Record<string, AdditionalBasicChainProperties>;
 
+  suiIsTestnet?: boolean;
+
   stxIsTestnet?: boolean;
   stxHeroApiKey?: string;
 }

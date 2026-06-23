@@ -1,60 +1,29 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
+import { Transaction, TransactionArgument, TransactionObjectInput, TransactionResult } from "@mysten/sui/transactions";
+import { ID } from "../../_dependencies/sui/object/structs";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
 import { obj, pure } from "../../_framework/util";
-import { ID } from "../../sui/object/structs";
-import { Transaction, TransactionArgument, TransactionObjectInput } from "@mysten/sui/transactions";
 
-export function data(tx: Transaction, message: TransactionObjectInput) {
+export function new_(
+  tx: Transaction,
+  message: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::data`,
+    target: `${getPublishedAt("utils", options?.env)}::message::new`,
     arguments: [obj(tx, message)],
   });
 }
 
-export function fromBytes(tx: Transaction, message: Array<number | TransactionArgument> | TransactionArgument) {
+export function fromBytes(
+  tx: Transaction,
+  message: Array<number | TransactionArgument> | TransactionArgument,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::from_bytes`,
+    target: `${getPublishedAt("utils", options?.env)}::message::from_bytes`,
     arguments: [pure(tx, message, `vector<u8>`)],
-  });
-}
-
-export function new_(tx: Transaction, message: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::new`,
-    arguments: [obj(tx, message)],
-  });
-}
-
-export function toHex(tx: Transaction, message: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::to_hex`,
-    arguments: [obj(tx, message)],
-  });
-}
-
-export interface AddSenderArgs {
-  message: TransactionObjectInput;
-  sender: string | TransactionArgument;
-}
-
-export function addSender(tx: Transaction, args: AddSenderArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::add_sender`,
-    arguments: [obj(tx, args.message), pure(tx, args.sender, `${ID.$typeName}`)],
-  });
-}
-
-export function chainFrom(tx: Transaction, message: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::chain_from`,
-    arguments: [obj(tx, message)],
-  });
-}
-
-export function chainTo(tx: Transaction, message: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::chain_to`,
-    arguments: [obj(tx, message)],
   });
 }
 
@@ -68,9 +37,9 @@ export interface FromArgsArgs {
   messenger: TransactionObjectInput;
 }
 
-export function fromArgs(tx: Transaction, args: FromArgsArgs) {
+export function fromArgs(tx: Transaction, args: FromArgsArgs, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::from_args`,
+    target: `${getPublishedAt("utils", options?.env)}::message::from_args`,
     arguments: [
       pure(tx, args.amount, `u64`),
       obj(tx, args.recipient),
@@ -80,6 +49,18 @@ export function fromArgs(tx: Transaction, args: FromArgsArgs) {
       pure(tx, args.nonce, `u256`),
       obj(tx, args.messenger),
     ],
+  });
+}
+
+export interface AddSenderArgs {
+  message: TransactionObjectInput;
+  sender: string | TransactionArgument;
+}
+
+export function addSender(tx: Transaction, args: AddSenderArgs, options?: { env?: EnvConfig }): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("utils", options?.env)}::message::add_sender`,
+    arguments: [obj(tx, args.message), pure(tx, args.sender, `${ID.$typeName}`)],
   });
 }
 
@@ -94,9 +75,13 @@ export interface FromArgsWithSenderArgs {
   sender: string | TransactionArgument;
 }
 
-export function fromArgsWithSender(tx: Transaction, args: FromArgsWithSenderArgs) {
+export function fromArgsWithSender(
+  tx: Transaction,
+  args: FromArgsWithSenderArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::message::from_args_with_sender`,
+    target: `${getPublishedAt("utils", options?.env)}::message::from_args_with_sender`,
     arguments: [
       pure(tx, args.amount, `u64`),
       obj(tx, args.recipient),
@@ -107,5 +92,49 @@ export function fromArgsWithSender(tx: Transaction, args: FromArgsWithSenderArgs
       obj(tx, args.messenger),
       pure(tx, args.sender, `${ID.$typeName}`),
     ],
+  });
+}
+
+export function data(
+  tx: Transaction,
+  message: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("utils", options?.env)}::message::data`,
+    arguments: [obj(tx, message)],
+  });
+}
+
+export function toHex(
+  tx: Transaction,
+  message: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("utils", options?.env)}::message::to_hex`,
+    arguments: [obj(tx, message)],
+  });
+}
+
+export function chainFrom(
+  tx: Transaction,
+  message: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("utils", options?.env)}::message::chain_from`,
+    arguments: [obj(tx, message)],
+  });
+}
+
+export function chainTo(
+  tx: Transaction,
+  message: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("utils", options?.env)}::message::chain_to`,
+    arguments: [obj(tx, message)],
   });
 }

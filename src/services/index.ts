@@ -1,4 +1,4 @@
-import { Big } from "big.js";
+import { Big, BigSource } from "big.js";
 import { Chains } from "../chains";
 import { ApiClientImpl } from "../client/core-api/api-client";
 import { ApiClientCaching } from "../client/core-api/api-client-caching";
@@ -225,7 +225,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async calculateFeePercentOnSourceChain(
-    amountFloat: number | string | Big,
+    amountFloat: BigSource,
     sourceChainToken: TokenWithChainDetails
   ): Promise<number> {
     validateAmountGtZero(amountFloat);
@@ -244,7 +244,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async calculateFeePercentOnDestinationChain(
-    amountFloat: number | string | Big,
+    amountFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): Promise<number> {
@@ -269,7 +269,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceivedAndGasFeeOptions(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -289,7 +289,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSendAndGasFeeOptions(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -309,7 +309,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceived(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -325,7 +325,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceivedFromChain(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger,
@@ -343,7 +343,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceivedCompute(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger = Messenger.ALLBRIDGE,
@@ -377,7 +377,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToBeReceivedComputeWithPools(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     sourcePool: PoolInfo,
@@ -392,7 +392,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToBeReceivedComputeCctp(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger.CCTP | Messenger.CCTP_V2
@@ -435,7 +435,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToBeReceivedComputeXReserve(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): string {
@@ -463,7 +463,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceivedComputeOft(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): Promise<string> {
@@ -498,7 +498,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSend(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -514,7 +514,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSendFromChain(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger,
@@ -532,7 +532,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSendCompute(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger = Messenger.ALLBRIDGE,
@@ -566,7 +566,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToSendComputeWithPools(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     sourcePool: PoolInfo,
@@ -585,7 +585,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToSendComputeCctp(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger.CCTP | Messenger.CCTP_V2
@@ -627,7 +627,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToSendComputeXReserve(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): string {
@@ -667,7 +667,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSendComputeOft(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): Promise<string> {
