@@ -1,4 +1,4 @@
-import axios, { Axios, AxiosHeaders } from "axios";
+import { Axios, AxiosHeaders, create } from "axios";
 import { InvalidMessengerOptionError } from "../../exceptions";
 import { ChainDetailsMapWithFlags, PoolInfoMap, PoolKeyObject } from "../../tokens-info";
 import { VERSION } from "../../version";
@@ -42,7 +42,7 @@ export class ApiClientImpl implements ApiClient {
   private api: Axios;
 
   constructor(params: AllbridgeCoreClientParams) {
-    this.api = axios.create({
+    this.api = create({
       baseURL: params.coreApiUrl,
       headers: {
         Accept: "application/json",

@@ -1,7 +1,28 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
+import { Transaction, TransactionArgument, TransactionObjectInput, TransactionResult } from "@mysten/sui/transactions";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
 import { obj, pure } from "../../_framework/util";
-import { Transaction, TransactionArgument, TransactionObjectInput } from "@mysten/sui/transactions";
+
+/** Contract initialization. */
+export function init(tx: Transaction, options?: { env?: EnvConfig }): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::init`,
+    arguments: [],
+  });
+}
+
+export interface MigrateArgs {
+  admin: TransactionObjectInput;
+  cctpBridge: TransactionObjectInput;
+}
+
+export function migrate(tx: Transaction, args: MigrateArgs, options?: { env?: EnvConfig }): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::migrate`,
+    arguments: [obj(tx, args.admin), obj(tx, args.cctpBridge)],
+  });
+}
 
 export interface BridgeArgs {
   cctpBridge: TransactionObjectInput;
@@ -18,9 +39,14 @@ export interface BridgeArgs {
   recipientWalletAddress: TransactionObjectInput;
 }
 
-export function bridge(tx: Transaction, typeArg: string, args: BridgeArgs) {
+export function bridge(
+  tx: Transaction,
+  typeArg: string,
+  args: BridgeArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::bridge`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::bridge`,
     typeArguments: [typeArg],
     arguments: [
       obj(tx, args.cctpBridge),
@@ -39,98 +65,6 @@ export function bridge(tx: Transaction, typeArg: string, args: BridgeArgs) {
   });
 }
 
-export function getId(tx: Transaction, cctpBridge: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::get_id`,
-    arguments: [obj(tx, cctpBridge)],
-  });
-}
-
-export function getVersion(tx: Transaction) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::get_version`,
-    arguments: [],
-  });
-}
-
-export function init(tx: Transaction) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::init`,
-    arguments: [],
-  });
-}
-
-export interface MigrateArgs {
-  admin: TransactionObjectInput;
-  cctpBridge: TransactionObjectInput;
-}
-
-export function migrate(tx: Transaction, args: MigrateArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::migrate`,
-    arguments: [obj(tx, args.admin), obj(tx, args.cctpBridge)],
-  });
-}
-
-export interface GetTransactionCostArgs {
-  cctpBridge: TransactionObjectInput;
-  gasOracle: TransactionObjectInput;
-  chainId: number | TransactionArgument;
-}
-
-export function getTransactionCost(tx: Transaction, args: GetTransactionCostArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::get_transaction_cost`,
-    arguments: [obj(tx, args.cctpBridge), obj(tx, args.gasOracle), pure(tx, args.chainId, `u8`)],
-  });
-}
-
-export interface SetGasUsageArgs {
-  cctpBridge: TransactionObjectInput;
-  chainId: number | TransactionArgument;
-  value: bigint | TransactionArgument;
-}
-
-export function setGasUsage(tx: Transaction, args: SetGasUsageArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::set_gas_usage`,
-    arguments: [obj(tx, args.cctpBridge), pure(tx, args.chainId, `u8`), pure(tx, args.value, `u64`)],
-  });
-}
-
-export interface WithdrawFeeArgs {
-  cctpBridge: TransactionObjectInput;
-  amount: bigint | TransactionArgument;
-}
-
-export function withdrawFee(tx: Transaction, typeArg: string, args: WithdrawFeeArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::withdraw_fee`,
-    typeArguments: [typeArg],
-    arguments: [obj(tx, args.cctpBridge), pure(tx, args.amount, `u64`)],
-  });
-}
-
-export interface GasUsageArgs {
-  cctpBridge: TransactionObjectInput;
-  chainId: number | TransactionArgument;
-}
-
-export function gasUsage(tx: Transaction, args: GasUsageArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::gas_usage`,
-    arguments: [obj(tx, args.cctpBridge), pure(tx, args.chainId, `u8`)],
-  });
-}
-
-export function feeValue(tx: Transaction, typeArg: string, cctpBridge: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::fee_value`,
-    typeArguments: [typeArg],
-    arguments: [obj(tx, cctpBridge)],
-  });
-}
-
 export interface ReceiveTokensArgs {
   tokenMessengerMinterState: TransactionObjectInput;
   messageTransmitterState: TransactionObjectInput;
@@ -142,9 +76,14 @@ export interface ReceiveTokensArgs {
   extraGasCoin: TransactionObjectInput;
 }
 
-export function receiveTokens(tx: Transaction, typeArg: string, args: ReceiveTokensArgs) {
+export function receiveTokens(
+  tx: Transaction,
+  typeArg: string,
+  args: ReceiveTokensArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::receive_tokens`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::receive_tokens`,
     typeArguments: [typeArg],
     arguments: [
       obj(tx, args.tokenMessengerMinterState),
@@ -168,9 +107,14 @@ export interface ChangeRecipientArgs {
   messageTransmitterState: TransactionObjectInput;
 }
 
-export function changeRecipient(tx: Transaction, typeArg: string, args: ChangeRecipientArgs) {
+export function changeRecipient(
+  tx: Transaction,
+  typeArg: string,
+  args: ChangeRecipientArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::change_recipient`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::change_recipient`,
     typeArguments: [typeArg],
     arguments: [
       obj(tx, args.cctpBridge),
@@ -183,10 +127,10 @@ export function changeRecipient(tx: Transaction, typeArg: string, args: ChangeRe
   });
 }
 
-export function deserializeNonce(tx: Transaction, data: Array<number | TransactionArgument> | TransactionArgument) {
+export function getVersion(tx: Transaction, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::deserialize_nonce`,
-    arguments: [pure(tx, data, `vector<u8>`)],
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::get_version`,
+    arguments: [],
   });
 }
 
@@ -196,9 +140,13 @@ export interface GetBridgingCostInTokensArgs {
   chainId: number | TransactionArgument;
 }
 
-export function getBridgingCostInTokens(tx: Transaction, args: GetBridgingCostInTokensArgs) {
+export function getBridgingCostInTokens(
+  tx: Transaction,
+  args: GetBridgingCostInTokensArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::get_bridging_cost_in_tokens`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::get_bridging_cost_in_tokens`,
     arguments: [obj(tx, args.cctpBridge), obj(tx, args.gasOracle), pure(tx, args.chainId, `u8`)],
   });
 }
@@ -208,9 +156,13 @@ export interface GetDomainByChainIdArgs {
   chainId: number | TransactionArgument;
 }
 
-export function getDomainByChainId(tx: Transaction, args: GetDomainByChainIdArgs) {
+export function getDomainByChainId(
+  tx: Transaction,
+  args: GetDomainByChainIdArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::get_domain_by_chain_id`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::get_domain_by_chain_id`,
     arguments: [obj(tx, args.cctpBridge), pure(tx, args.chainId, `u8`)],
   });
 }
@@ -222,9 +174,13 @@ export interface IsMessageProcessedArgs {
   nonce: bigint | TransactionArgument;
 }
 
-export function isMessageProcessed(tx: Transaction, args: IsMessageProcessedArgs) {
+export function isMessageProcessed(
+  tx: Transaction,
+  args: IsMessageProcessedArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::is_message_processed`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::is_message_processed`,
     arguments: [
       obj(tx, args.cctpBridge),
       obj(tx, args.messageTransmitterState),
@@ -234,28 +190,73 @@ export function isMessageProcessed(tx: Transaction, args: IsMessageProcessedArgs
   });
 }
 
+export interface GetTransactionCostArgs {
+  cctpBridge: TransactionObjectInput;
+  gasOracle: TransactionObjectInput;
+  chainId: number | TransactionArgument;
+}
+
+export function getTransactionCost(
+  tx: Transaction,
+  args: GetTransactionCostArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::get_transaction_cost`,
+    arguments: [obj(tx, args.cctpBridge), obj(tx, args.gasOracle), pure(tx, args.chainId, `u8`)],
+  });
+}
+
+export interface GasUsageArgs {
+  cctpBridge: TransactionObjectInput;
+  chainId: number | TransactionArgument;
+}
+
+export function gasUsage(tx: Transaction, args: GasUsageArgs, options?: { env?: EnvConfig }): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::gas_usage`,
+    arguments: [obj(tx, args.cctpBridge), pure(tx, args.chainId, `u8`)],
+  });
+}
+
+export function feeValue(
+  tx: Transaction,
+  typeArg: string,
+  cctpBridge: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::fee_value`,
+    typeArguments: [typeArg],
+    arguments: [obj(tx, cctpBridge)],
+  });
+}
+
+export function getId(
+  tx: Transaction,
+  cctpBridge: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::get_id`,
+    arguments: [obj(tx, cctpBridge)],
+  });
+}
+
 export interface RegisterBridgeDestinationArgs {
   cctpBridge: TransactionObjectInput;
   chainId: number | TransactionArgument;
   domain: number | TransactionArgument;
 }
 
-export function registerBridgeDestination(tx: Transaction, args: RegisterBridgeDestinationArgs) {
+export function registerBridgeDestination(
+  tx: Transaction,
+  args: RegisterBridgeDestinationArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::register_bridge_destination`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::register_bridge_destination`,
     arguments: [obj(tx, args.cctpBridge), pure(tx, args.chainId, `u8`), pure(tx, args.domain, `u32`)],
-  });
-}
-
-export interface SetAdminFeeShareArgs {
-  cctpBridge: TransactionObjectInput;
-  adminFeeShareBp: bigint | TransactionArgument;
-}
-
-export function setAdminFeeShare(tx: Transaction, args: SetAdminFeeShareArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::set_admin_fee_share`,
-    arguments: [obj(tx, args.cctpBridge), pure(tx, args.adminFeeShareBp, `u64`)],
   });
 }
 
@@ -264,9 +265,71 @@ export interface UnregisterBridgeDestinationArgs {
   chainId: number | TransactionArgument;
 }
 
-export function unregisterBridgeDestination(tx: Transaction, args: UnregisterBridgeDestinationArgs) {
+export function unregisterBridgeDestination(
+  tx: Transaction,
+  args: UnregisterBridgeDestinationArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::cctp_bridge::unregister_bridge_destination`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::unregister_bridge_destination`,
     arguments: [obj(tx, args.cctpBridge), pure(tx, args.chainId, `u8`)],
+  });
+}
+
+export interface SetAdminFeeShareArgs {
+  cctpBridge: TransactionObjectInput;
+  adminFeeShareBp: bigint | TransactionArgument;
+}
+
+export function setAdminFeeShare(
+  tx: Transaction,
+  args: SetAdminFeeShareArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::set_admin_fee_share`,
+    arguments: [obj(tx, args.cctpBridge), pure(tx, args.adminFeeShareBp, `u64`)],
+  });
+}
+
+export interface WithdrawFeeArgs {
+  cctpBridge: TransactionObjectInput;
+  amount: bigint | TransactionArgument;
+}
+
+export function withdrawFee(
+  tx: Transaction,
+  typeArg: string,
+  args: WithdrawFeeArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::withdraw_fee`,
+    typeArguments: [typeArg],
+    arguments: [obj(tx, args.cctpBridge), pure(tx, args.amount, `u64`)],
+  });
+}
+
+export interface SetGasUsageArgs {
+  cctpBridge: TransactionObjectInput;
+  chainId: number | TransactionArgument;
+  value: bigint | TransactionArgument;
+}
+
+export function setGasUsage(tx: Transaction, args: SetGasUsageArgs, options?: { env?: EnvConfig }): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::set_gas_usage`,
+    arguments: [obj(tx, args.cctpBridge), pure(tx, args.chainId, `u8`), pure(tx, args.value, `u64`)],
+  });
+}
+
+export function deserializeNonce(
+  tx: Transaction,
+  data: Array<number | TransactionArgument> | TransactionArgument,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::cctp_bridge::deserialize_nonce`,
+    arguments: [pure(tx, data, `vector<u8>`)],
   });
 }

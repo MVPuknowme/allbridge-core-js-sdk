@@ -1,11 +1,11 @@
-import { SuiClient } from "@mysten/sui/client";
+import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { Transaction } from "@mysten/sui/transactions";
 import { Reified, toBcs, ToJSON, TypeArgument } from "../../models/sui/_framework/reified";
 
 const mockSender = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 export async function suiView<T extends TypeArgument>(
-  client: SuiClient,
+  client: SuiJsonRpcClient,
   tx: Transaction,
   reified: Reified<T, any>
 ): Promise<ToJSON<T>> {

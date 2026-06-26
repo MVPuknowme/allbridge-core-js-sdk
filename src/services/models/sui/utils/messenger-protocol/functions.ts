@@ -1,25 +1,30 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
+import { Transaction, TransactionArgument, TransactionObjectInput, TransactionResult } from "@mysten/sui/transactions";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
 import { obj } from "../../_framework/util";
-import { Transaction, TransactionObjectInput } from "@mysten/sui/transactions";
 
-export function wormhole(tx: Transaction) {
+export function allbridge(tx: Transaction, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::messenger_protocol::wormhole`,
+    target: `${getPublishedAt("utils", options?.env)}::messenger_protocol::allbridge`,
     arguments: [],
   });
 }
 
-export function allbridge(tx: Transaction) {
+export function wormhole(tx: Transaction, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::messenger_protocol::allbridge`,
+    target: `${getPublishedAt("utils", options?.env)}::messenger_protocol::wormhole`,
     arguments: [],
   });
 }
 
-export function id(tx: Transaction, messengerProtocol: TransactionObjectInput) {
+export function id(
+  tx: Transaction,
+  messengerProtocol: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::messenger_protocol::id`,
+    target: `${getPublishedAt("utils", options?.env)}::messenger_protocol::id`,
     arguments: [obj(tx, messengerProtocol)],
   });
 }

@@ -1,7 +1,7 @@
 import { createAddress } from "@stacks/transactions";
 import { Big } from "big.js";
 import BN from "bn.js";
-import { Contract, Transaction as Web3Transaction } from "web3";
+import { Contract } from "web3";
 import { PayableMethodObject } from "web3-eth-contract";
 import { Chains } from "../../../chains";
 import { AllbridgeCoreClient } from "../../../client/core-api/core-client-base";
@@ -387,7 +387,7 @@ export class EvmBridgeService extends ChainBridgeService {
   }
 
   private async sendRawTransaction(rawTransaction: RawTransaction) {
-    const estimateGas = await this.web3.eth.estimateGas(rawTransaction as Web3Transaction);
+    const estimateGas = await this.web3.eth.estimateGas(rawTransaction);
 
     // @ts-expect-error DISABLE SITE SUGGESTED GAS FEE IN METAMASK
     // prettier-ignore
@@ -396,7 +396,7 @@ export class EvmBridgeService extends ChainBridgeService {
       ...(rawTransaction as object),
       gas: estimateGas,
       ...feeOptions,
-    } as Web3Transaction);
+    });
     return { txId: transactionHash.toString() };
   }
 

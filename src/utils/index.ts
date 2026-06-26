@@ -26,7 +26,7 @@ export class DefaultUtils implements Utils {
   constructor(readonly service: AllbridgeCoreSdkService) {
     this.srb = new DefaultSrbUtils(service.nodeRpcUrlsConfig, service.params);
     this.sol = new DefaultSolUtils(service.nodeRpcUrlsConfig, service.params);
-    this.sui = new DefaultSuiUtils(service.nodeRpcUrlsConfig, service.api);
+    this.sui = new DefaultSuiUtils(service.nodeRpcUrlsConfig, service.params, service.api);
     this.evm = new DefaultEvmUtils(service.nodeRpcUrlsConfig, service.params);
     this.alg = new DefaultAlgUtils(service.nodeRpcUrlsConfig);
   }

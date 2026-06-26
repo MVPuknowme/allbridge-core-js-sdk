@@ -1,9 +1,9 @@
 // @ts-nocheck
-
 import { bcs, BcsType } from "@mysten/sui/bcs";
-import { fromHEX, toHEX } from "@mysten/sui/utils";
-import { FieldsWithTypes, compressSuiType, parseTypeName } from "./util";
-import { SuiClient, SuiParsedData, SuiObjectData } from "@mysten/sui/client";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromHex, toHex } from "@mysten/sui/utils";
+import { compressSuiType, FieldsWithTypes, parseTypeName } from "./util";
 
 // for backwards compatibility
 export { vector } from "./vector";
@@ -32,8 +32,20 @@ export interface VectorClass {
   __VectorClass: true;
 }
 
+export interface EnumVariantClass {
+  readonly $typeName: string;
+  readonly $fullTypeName: string;
+  readonly $variantName: string;
+  readonly $typeArgs: string[];
+  readonly $isPhantom: readonly boolean[];
+  toJSONField(): Record<string, any>;
+  toJSON(): Record<string, any>;
+
+  __EnumVariantClass: true;
+}
+
 export type Primitive = "bool" | "u8" | "u16" | "u32" | "u64" | "u128" | "u256" | "address";
-export type TypeArgument = StructClass | Primitive | VectorClass;
+export type TypeArgument = StructClass | Primitive | VectorClass | EnumVariantClass;
 
 export interface StructClassReified<T extends StructClass, Fields> {
   typeName: T["$typeName"]; // e.g., '0x2::balance::Balance', without type arguments
@@ -47,9 +59,12 @@ export interface StructClassReified<T extends StructClass, Fields> {
   fromBcs(data: Uint8Array): T;
   fromJSONField: (field: any) => T;
   fromJSON: (json: Record<string, any>) => T;
+  fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => T;
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link StructClassReified.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   fromSuiParsedData: (content: SuiParsedData) => T;
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link StructClassReified.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   fromSuiObjectData: (data: SuiObjectData) => T;
-  fetch: (client: SuiClient, id: string) => Promise<T>;
+  fetch: (client: ClientWithCoreApi, id: string) => Promise<T>;
   new: (fields: Fields) => T;
   kind: "StructClassReified";
 }
@@ -70,23 +85,47 @@ export interface VectorClassReified<T extends VectorClass, Elements> {
   kind: "VectorClassReified";
 }
 
+export interface EnumClassReified<T extends EnumVariantClass, Fields> {
+  typeName: T["$typeName"];
+  fullTypeName: T["$fullTypeName"];
+  typeArgs: T["$typeArgs"];
+  isPhantom: T["$isPhantom"];
+  reifiedTypeArgs: Array<Reified<TypeArgument, any> | PhantomReified<PhantomTypeArgument>>;
+  bcs: BcsType<any>;
+  fromFields(fields: Record<string, any>): T;
+  fromFieldsWithTypes(item: FieldsWithTypes): T;
+  fromBcs(data: Uint8Array): T;
+  fromJSONField: (field: any) => T;
+  fromJSON: (json: Record<string, any>) => T;
+  new: (variant: string, fields: Fields) => T;
+  kind: "EnumClassReified";
+}
+
 export type Reified<T extends TypeArgument, Fields> = T extends Primitive
   ? Primitive
   : T extends StructClass
     ? StructClassReified<T, Fields>
     : T extends VectorClass
       ? VectorClassReified<T, Fields>
-      : never;
+      : T extends EnumVariantClass
+        ? EnumClassReified<T, Fields>
+        : never;
 
 export type ToTypeArgument<
-  T extends Primitive | StructClassReified<StructClass, any> | VectorClassReified<VectorClass, any>,
+  T extends
+    | Primitive
+    | StructClassReified<StructClass, any>
+    | VectorClassReified<VectorClass, any>
+    | EnumClassReified<EnumVariantClass, any>,
 > = T extends Primitive
   ? T
   : T extends StructClassReified<infer U, any>
     ? U
     : T extends VectorClassReified<infer U, any>
       ? U
-      : never;
+      : T extends EnumClassReified<infer U, any>
+        ? U
+        : never;
 
 export type ToPhantomTypeArgument<T extends PhantomReified<PhantomTypeArgument>> =
   T extends PhantomReified<infer U> ? U : never;
@@ -94,7 +133,7 @@ export type ToPhantomTypeArgument<T extends PhantomReified<PhantomTypeArgument>>
 export type PhantomTypeArgument = string;
 
 export interface PhantomReified<P> {
-  phantomType: P;
+  readonly phantomType: P;
   kind: "PhantomReified";
 }
 
@@ -107,8 +146,15 @@ export function phantom(type: string | Reified<TypeArgument, any>): PhantomReifi
       kind: "PhantomReified",
     };
   } else {
+    // Reified handle case: read `fullTypeName` lazily so phantom handles created
+    // before `setActiveEnv(...)` still reflect the current env on each access.
+    // Without this getter, `phantomType` would freeze the typeName at phantom-call time
+    // and leak the wrong address into vector/option type-arg strings produced via
+    // `extractType(...)`.
     return {
-      phantomType: type.fullTypeName,
+      get phantomType() {
+        return type.fullTypeName;
+      },
       kind: "PhantomReified",
     };
   }
@@ -150,16 +196,20 @@ export type ToJSON<T extends TypeArgument> = T extends "bool"
                         ? string
                         : T extends { $typeName: "0x2::url::Url" }
                           ? string
-                          : T extends {
-                                $typeName: "0x1::option::Option";
-                                __inner: infer U extends TypeArgument;
-                              }
-                            ? ToJSON<U> | null
-                            : T extends VectorClass
-                              ? ReturnType<T["toJSONField"]>
-                              : T extends StructClass
+                          : T extends { $typeName: "0x1::type_name::TypeName" }
+                            ? string
+                            : T extends {
+                                  $typeName: "0x1::option::Option";
+                                  __inner: infer U extends TypeArgument;
+                                }
+                              ? ToJSON<U> | null
+                              : T extends VectorClass
                                 ? ReturnType<T["toJSONField"]>
-                                : never;
+                                : T extends StructClass
+                                  ? ReturnType<T["toJSONField"]>
+                                  : T extends EnumVariantClass
+                                    ? ReturnType<T["toJSONField"]>
+                                    : never;
 
 export type ToField<T extends TypeArgument> = T extends "bool"
   ? boolean
@@ -187,20 +237,24 @@ export type ToField<T extends TypeArgument> = T extends "bool"
                         ? string
                         : T extends { $typeName: "0x2::url::Url" }
                           ? string
-                          : T extends {
-                                $typeName: "0x1::option::Option";
-                                __inner: infer U extends TypeArgument;
-                              }
-                            ? ToField<U> | null
-                            : T extends VectorClass
-                              ? T["elements"]
-                              : T extends StructClass
-                                ? T
-                                : never;
+                          : T extends { $typeName: "0x1::type_name::TypeName" }
+                            ? string
+                            : T extends {
+                                  $typeName: "0x1::option::Option";
+                                  __inner: infer U extends TypeArgument;
+                                }
+                              ? ToField<U> | null
+                              : T extends VectorClass
+                                ? T["elements"]
+                                : T extends StructClass
+                                  ? T
+                                  : T extends EnumVariantClass
+                                    ? T
+                                    : never;
 
 const Address = bcs.bytes(32).transform({
-  input: (val: string) => fromHEX(val),
-  output: (val) => toHEX(val),
+  input: (val: string) => fromHex(val),
+  output: (val) => toHex(val),
 });
 
 export function toBcs<T extends Reified<TypeArgument, any>>(arg: T): BcsType<any> {
@@ -252,12 +306,14 @@ export function extractType(reified: Reified<TypeArgument, any> | PhantomReified
       return reified.fullTypeName;
     case "VectorClassReified":
       return reified.fullTypeName;
+    case "EnumClassReified":
+      return reified.fullTypeName;
   }
 
   throw new Error("unreachable");
 }
 
-export function decodeFromFields(reified: Reified<TypeArgument, any>, field: any) {
+export function decodeFromFields(reified: Reified<TypeArgument, any>, field: any): any {
   switch (reified) {
     case "bool":
     case "u8":
@@ -284,6 +340,8 @@ export function decodeFromFields(reified: Reified<TypeArgument, any>, field: any
       return `0x${field.bytes}`;
     case "0x2::object::UID":
       return `0x${field.id.bytes}`;
+    case "0x1::type_name::TypeName":
+      return new TextDecoder().decode(Uint8Array.from(field.name.bytes)).toString();
     case "0x1::option::Option": {
       if (field.vec.length === 0) {
         return null;
@@ -295,7 +353,7 @@ export function decodeFromFields(reified: Reified<TypeArgument, any>, field: any
   }
 }
 
-export function decodeFromFieldsWithTypes(reified: Reified<TypeArgument, any>, item: any) {
+export function decodeFromFieldsWithTypes(reified: Reified<TypeArgument, any>, item: any): any {
   switch (reified) {
     case "bool":
     case "u8":
@@ -320,6 +378,8 @@ export function decodeFromFieldsWithTypes(reified: Reified<TypeArgument, any>, i
       return item;
     case "0x2::object::UID":
       return item.id;
+    case "0x1::type_name::TypeName":
+      return item.fields.name;
     case "0x2::balance::Balance":
       return reified.fromFields({ value: BigInt(item) });
     case "0x1::option::Option": {
@@ -337,7 +397,7 @@ export function assertReifiedTypeArgsMatch(
   fullType: string,
   typeArgs: string[],
   reifiedTypeArgs: Array<Reified<TypeArgument, any> | PhantomReified<string>>
-) {
+): void {
   if (reifiedTypeArgs.length !== typeArgs.length) {
     throw new Error(
       `provided item has mismatching number of type argments ${fullType} (expected ${reifiedTypeArgs.length}, got ${typeArgs.length}))`
@@ -346,9 +406,9 @@ export function assertReifiedTypeArgsMatch(
   for (let i = 0; i < typeArgs.length; i++) {
     if (compressSuiType(typeArgs[i]) !== compressSuiType(extractType(reifiedTypeArgs[i]))) {
       throw new Error(
-        `provided item has mismatching type argments ${fullType} (expected ${extractType(reifiedTypeArgs[i])}, got ${
-          typeArgs[i]
-        }))`
+        `provided item has mismatching type argments ${fullType} (expected ${extractType(
+          reifiedTypeArgs[i]
+        )}, got ${typeArgs[i]}))`
       );
     }
   }
@@ -357,7 +417,7 @@ export function assertReifiedTypeArgsMatch(
 export function assertFieldsWithTypesArgsMatch(
   item: FieldsWithTypes,
   reifiedTypeArgs: Array<Reified<TypeArgument, any> | PhantomReified<string>>
-) {
+): void {
   const { typeArgs: itemTypeArgs } = parseTypeName(item.type);
   assertReifiedTypeArgsMatch(item.type, itemTypeArgs, reifiedTypeArgs);
 }
@@ -386,6 +446,7 @@ export function fieldToJSON<T extends TypeArgument>(type: string, field: ToField
     case "0x2::url::Url":
     case "0x2::object::ID":
     case "0x2::object::UID":
+    case "0x1::type_name::TypeName":
       return field as any;
     case "0x1::option::Option": {
       if (field === null) {
@@ -398,7 +459,7 @@ export function fieldToJSON<T extends TypeArgument>(type: string, field: ToField
   }
 }
 
-export function decodeFromJSONField(typeArg: Reified<TypeArgument, any>, field: any) {
+export function decodeFromJSONField(typeArg: Reified<TypeArgument, any>, field: any): any {
   switch (typeArg) {
     case "bool":
     case "u8":
@@ -421,6 +482,7 @@ export function decodeFromJSONField(typeArg: Reified<TypeArgument, any>, field: 
     case "0x2::url::Url":
     case "0x2::object::ID":
     case "0x2::object::UID":
+    case "0x1::type_name::TypeName":
       return field;
     case "0x1::option::Option": {
       if (field === null) {

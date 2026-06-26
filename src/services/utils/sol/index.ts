@@ -67,7 +67,7 @@ export function getMessage(args: {
   if (!message) {
     throw new SdkError("message cannot be undefined");
   }
-  const hash = Web3.utils.keccak256(Buffer.from(message.replace("0x", ""), "hex") as any);
+  const hash = Web3.utils.keccak256(Buffer.from(message.replace("0x", ""), "hex"));
 
   const hashBuffer = Buffer.from(hash.replace("0x", ""), "hex");
   hashBuffer[0] = sourceChainId;
@@ -82,7 +82,7 @@ export function getMessage(args: {
     throw new InvalidTxError("messageWithSigner cannot be undefined");
   }
 
-  const hashWithSigner = Web3.utils.keccak256(Buffer.from(messageWithSigner.replace("0x", ""), "hex") as any);
+  const hashWithSigner = Web3.utils.keccak256(Buffer.from(messageWithSigner.replace("0x", ""), "hex"));
 
   const hashWithSignerBuffer = Buffer.from(hashWithSigner.replace("0x", ""), "hex");
 

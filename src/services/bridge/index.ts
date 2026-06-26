@@ -224,7 +224,7 @@ export function getChainBridgeService(
       return new SrbBridgeService(nodeRpcUrlsConfig, params, api);
     }
     case ChainType.SUI: {
-      return new SuiBridgeService(nodeRpcUrlsConfig, api);
+      return new SuiBridgeService(nodeRpcUrlsConfig, params, api);
     }
     case ChainType.ALG: {
       if (provider) {

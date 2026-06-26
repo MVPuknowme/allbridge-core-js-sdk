@@ -1,8 +1,9 @@
-import { CoinStruct, SuiClient } from "@mysten/sui/client";
+import { CoinStruct, SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { coinWithBalance, Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { Big } from "big.js";
 import { AllbridgeCoreClient } from "../../../client/core-api/core-client-base";
+import { AllbridgeCoreSdkOptions } from "../../../index";
 import {
   ChainSymbol,
   ChainType,
@@ -32,15 +33,17 @@ export class SuiBridgeService extends ChainBridgeService {
   chainType: ChainType.SUI = ChainType.SUI;
   chainSymbol: ChainSymbol.SUI = ChainSymbol.SUI;
 
-  private readonly client: SuiClient;
+  private readonly client: SuiJsonRpcClient;
 
   constructor(
     private nodeRpcUrlsConfig: NodeRpcUrlsConfig,
+    readonly params: AllbridgeCoreSdkOptions,
     public api: AllbridgeCoreClient
   ) {
     super();
-    this.client = new SuiClient({
+    this.client = new SuiJsonRpcClient({
       url: nodeRpcUrlsConfig.getNodeRpcUrl(this.chainSymbol),
+      network: params.suiIsTestnet ? "testnet" : "mainnet",
     });
   }
 
