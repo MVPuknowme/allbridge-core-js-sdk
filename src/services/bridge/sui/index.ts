@@ -1,8 +1,9 @@
-import { CoinStruct, SuiClient } from "@mysten/sui/client";
+import { CoinStruct, SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { coinWithBalance, Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { Big } from "big.js";
 import { AllbridgeCoreClient } from "../../../client/core-api/core-client-base";
+import { AllbridgeCoreSdkOptions } from "../../../index";
 import {
   ChainSymbol,
   ChainType,
@@ -32,15 +33,17 @@ export class SuiBridgeService extends ChainBridgeService {
   chainType: ChainType.SUI = ChainType.SUI;
   chainSymbol: ChainSymbol.SUI = ChainSymbol.SUI;
 
-  private readonly client: SuiClient;
+  private readonly client: SuiJsonRpcClient;
 
   constructor(
     private nodeRpcUrlsConfig: NodeRpcUrlsConfig,
+    readonly params: AllbridgeCoreSdkOptions,
     public api: AllbridgeCoreClient
   ) {
     super();
-    this.client = new SuiClient({
+    this.client = new SuiJsonRpcClient({
       url: nodeRpcUrlsConfig.getNodeRpcUrl(this.chainSymbol),
+      network: params.suiIsTestnet ? "testnet" : "mainnet",
     });
   }
 
@@ -126,6 +129,8 @@ export class SuiBridgeService extends ChainBridgeService {
       case Messenger.CCTP:
       case Messenger.CCTP_V2:
         return this.buildRawTransactionCctpSend(params, txSendParams, suiAddresses, tx, inputCoin);
+      case Messenger.X_RESERVE:
+        throw new SdkError("Messenger xReserve is not supported for SUI bridge");
       case Messenger.OFT:
         throw new OFTDoesNotSupportedError("Messenger OFT is not supported yet.");
     }
@@ -204,8 +209,8 @@ export class SuiBridgeService extends ChainBridgeService {
         swapAndBridge(tx, fromTokenAddress, args);
         break;
       }
-      case FeePaymentMethod.WITH_ARB:
-        throw new SdkError("SUI bridge does not support ARB0 payment method");
+      case FeePaymentMethod.WITH_ABR:
+        throw new SdkError("SUI bridge does not support ABR payment method");
       default: {
         return assertNever(gasFeePaymentMethod, "Unhandled FeePaymentMethod");
       }
@@ -291,8 +296,8 @@ export class SuiBridgeService extends ChainBridgeService {
         swapAndBridgeWormhole(tx, fromTokenAddress, args);
         break;
       }
-      case FeePaymentMethod.WITH_ARB:
-        throw new SdkError("SUI bridge does not support ARB0 payment method");
+      case FeePaymentMethod.WITH_ABR:
+        throw new SdkError("SUI bridge does not support ABR payment method");
       default: {
         return assertNever(gasFeePaymentMethod, "Unhandled FeePaymentMethod");
       }
@@ -394,8 +399,8 @@ export class SuiBridgeService extends ChainBridgeService {
         bridge(tx, fromTokenAddress, args);
         break;
       }
-      case FeePaymentMethod.WITH_ARB:
-        throw new SdkError("SUI bridge does not support ARB0 payment method");
+      case FeePaymentMethod.WITH_ABR:
+        throw new SdkError("SUI bridge does not support ABR payment method");
       default: {
         return assertNever(gasFeePaymentMethod, "Unhandled FeePaymentMethod");
       }

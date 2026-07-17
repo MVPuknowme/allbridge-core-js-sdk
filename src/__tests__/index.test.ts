@@ -43,7 +43,7 @@ const basicTokenInfoWithChainDetails = tokenInfoList[1] as unknown as TokenWithC
 const basicTokenInfoWithChainDetails2 = tokenInfoList[2] as unknown as TokenWithChainDetails;
 const trxBasicTokenInfoWithChainDetails = tokenInfoList[5] as unknown as TokenWithChainDetails;
 
-jest.mock("../services/bridge/sol/jupiter");
+jest.mock("../services/bridge/sol/jupiter-service");
 
 describe("SDK", () => {
   let sdk: AllbridgeCoreSdk;
@@ -62,6 +62,8 @@ describe("SDK", () => {
       cctpDomains: {},
       cctpTransmitterProgramId: "",
       cctpTokenMessengerMinter: "",
+      cctpV2TransmitterProgramId: "",
+      cctpV2TokenMessengerMinter: "",
     },
     cachePoolInfoChainSec: 20,
     additionalChainsProperties: {
@@ -399,7 +401,7 @@ describe("SDK", () => {
             token: tokenInfo,
             owner: owner,
           });
-          expect(allowanceMocked).toBeCalledWith(owner, tokenInfo.bridgeAddress);
+          expect(allowanceMocked).toHaveBeenCalledWith(owner, tokenInfo.bridgeAddress);
           expect(allowanceMocked).toHaveBeenCalledTimes(1);
           expect(methodCallMock).toHaveBeenCalledTimes(1);
           expect(actual).toEqual(tokensAmount);
@@ -420,7 +422,7 @@ describe("SDK", () => {
           };
 
           const actual = await sdk.bridge.getAllowance(provider, params);
-          expect(allowanceMocked).toBeCalledWith(owner, bridgeAddress);
+          expect(allowanceMocked).toHaveBeenCalledWith(owner, bridgeAddress);
           expect(allowanceMocked).toHaveBeenCalledTimes(1);
           expect(methodCallMock).toHaveBeenCalledTimes(1);
           expect(actual).toEqual(tokensAmount);
@@ -441,7 +443,7 @@ describe("SDK", () => {
           };
 
           const actual = await sdk.bridge.getAllowance(provider, params);
-          expect(allowanceMocked).toBeCalledWith(owner, params.token.bridgeAddress);
+          expect(allowanceMocked).toHaveBeenCalledWith(owner, params.token.bridgeAddress);
           expect(allowanceMocked).toHaveBeenCalledTimes(1);
           expect(methodCallMock).toHaveBeenCalledTimes(1);
           expect(actual).toEqual(tokensAmount);
@@ -470,7 +472,7 @@ describe("SDK", () => {
               owner: owner,
               amount: amount,
             });
-            expect(allowanceMocked).toBeCalledWith(owner, grlTokenInfo.bridgeAddress);
+            expect(allowanceMocked).toHaveBeenCalledWith(owner, grlTokenInfo.bridgeAddress);
             expect(allowanceMocked).toHaveBeenCalledTimes(1);
             expect(methodCallMock).toHaveBeenCalledTimes(1);
             expect(actual).toEqual(expected);
@@ -531,7 +533,7 @@ describe("SDK", () => {
             };
 
             const actual = await sdk.bridge.checkAllowance(provider, params);
-            expect(allowanceMocked).toBeCalledWith(owner, expectedContractAddress);
+            expect(allowanceMocked).toHaveBeenCalledWith(owner, expectedContractAddress);
             expect(allowanceMocked).toHaveBeenCalledTimes(1);
             expect(methodCallMock).toHaveBeenCalledTimes(1);
             expect(actual).toEqual(expected);
@@ -570,7 +572,7 @@ describe("SDK", () => {
             owner: owner,
             token: trxTokenInfo,
           });
-          expect(allowanceMocked).toBeCalledWith(owner, trxTokenInfo.bridgeAddress);
+          expect(allowanceMocked).toHaveBeenCalledWith(owner, trxTokenInfo.bridgeAddress);
           expect(allowanceMocked).toHaveBeenCalledTimes(1);
           expect(methodCallMock).toHaveBeenCalledTimes(1);
           expect(actual).toEqual(tokensAmount);
@@ -599,7 +601,7 @@ describe("SDK", () => {
               owner: owner,
               amount: amount,
             });
-            expect(allowanceMocked).toBeCalledWith(owner, trxTokenInfo.bridgeAddress);
+            expect(allowanceMocked).toHaveBeenCalledWith(owner, trxTokenInfo.bridgeAddress);
             expect(allowanceMocked).toHaveBeenCalledTimes(1);
             expect(methodCallMock).toHaveBeenCalledTimes(1);
             expect(actual).toEqual(expected);
@@ -718,7 +720,7 @@ describe("SDK", () => {
 
         const transactionResponse = await sdk.bridge.send(new Web3("http://localhost/"), sendParams);
 
-        expect(swapAndBridgeMocked).toBeCalledTimes(1);
+        expect(swapAndBridgeMocked).toHaveBeenCalledTimes(1);
         expect(methodSendRawTransactionSpy).toHaveBeenCalledTimes(1);
         expect(methodSendRawTransactionSpy).toHaveBeenCalledWith({
           from: fromAccountAddress,
@@ -730,7 +732,7 @@ describe("SDK", () => {
         const expectedAmount = Big(tokensAmount)
           .mul(10 ** grlChainToken.decimals)
           .toFixed();
-        expect(swapAndBridgeMocked).lastCalledWith(
+        expect(swapAndBridgeMocked).toHaveBeenLastCalledWith(
           formatAddress(grlChainToken.tokenAddress, ChainType.EVM, ChainType.EVM),
           expectedAmount,
           formatAddress(toAccountAddress, ChainType.TRX, ChainType.EVM),
@@ -803,7 +805,7 @@ describe("SDK", () => {
         const expectedAmount = Big(tokensAmount)
           .mul(10 ** trxChainToken.decimals)
           .toFixed();
-        expect(methodTriggerSmartContractMock).toBeCalledWith(
+        expect(methodTriggerSmartContractMock).toHaveBeenCalledWith(
           trxChainToken.bridgeAddress,
           "swapAndBridge(bytes32,uint256,bytes32,uint256,bytes32,uint256,uint8,uint256)",
           { callValue: +fee },
@@ -829,11 +831,11 @@ describe("SDK", () => {
           fromAccountAddress
         );
         expect(methodSignMock).toHaveBeenCalledTimes(1);
-        expect(methodSignMock).toBeCalledWith(rawTx);
+        expect(methodSignMock).toHaveBeenCalledWith(rawTx);
         expect(methodSendRawTransactionMock).toHaveBeenCalledTimes(1);
-        expect(methodSendRawTransactionMock).toBeCalledWith(signedTx);
+        expect(methodSendRawTransactionMock).toHaveBeenCalledWith(signedTx);
         expect(methodVerifyTxMocked).toHaveBeenCalledTimes(1);
-        expect(methodVerifyTxMocked).toBeCalledWith(transactionHash);
+        expect(methodVerifyTxMocked).toHaveBeenCalledWith(transactionHash);
 
         expect(transactionResponse).toEqual({ txId: transactionHash });
         scope.done();
@@ -898,7 +900,7 @@ describe("SDK", () => {
 
         const transactionResponse = await sdk.bridge.send(new Web3("http://localhost/"), sendParams);
 
-        expect(swapAndBridgeMocked).toBeCalledTimes(1);
+        expect(swapAndBridgeMocked).toHaveBeenCalledTimes(1);
         expect(methodSendRawTransactionSpy).toHaveBeenCalledTimes(1);
         expect(methodSendRawTransactionSpy).toHaveBeenCalledWith({
           from: fromAccountAddress,
@@ -913,7 +915,7 @@ describe("SDK", () => {
         const expectedFeeAmount = Big(feeInStablecoins)
           .mul(10 ** grlChainToken.decimals)
           .toFixed();
-        expect(swapAndBridgeMocked).lastCalledWith(
+        expect(swapAndBridgeMocked).toHaveBeenLastCalledWith(
           formatAddress(grlChainToken.tokenAddress, ChainType.EVM, ChainType.EVM),
           expectedTotalAmount,
           formatAddress(toAccountAddress, ChainType.TRX, ChainType.EVM),
@@ -975,7 +977,7 @@ describe("SDK", () => {
         };
 
         const rawTransactionTransfer = await sdk.bridge.rawTxBuilder.send(swapParams, tronWebMock as any as TronWeb);
-        expect(methodTriggerSmartContractMock).toBeCalledWith(
+        expect(methodTriggerSmartContractMock).toHaveBeenCalledWith(
           trxChainToken.bridgeAddress,
           "swap(uint256,bytes32,bytes32,address,uint256)",
           { callValue: +"0" },

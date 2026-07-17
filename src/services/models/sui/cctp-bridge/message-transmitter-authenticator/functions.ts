@@ -1,10 +1,11 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
-import { Transaction } from "@mysten/sui/transactions";
+import { Transaction, TransactionArgument, TransactionResult } from "@mysten/sui/transactions";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
 
-export function new_(tx: Transaction) {
+export function new_(tx: Transaction, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::message_transmitter_authenticator::new`,
+    target: `${getPublishedAt("cctp-bridge", options?.env)}::message_transmitter_authenticator::new`,
     arguments: [],
   });
 }

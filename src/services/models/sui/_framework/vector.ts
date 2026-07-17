@@ -1,26 +1,34 @@
 // @ts-nocheck
-
 import { bcs } from "@mysten/sui/bcs";
 import {
   decodeFromFields,
   decodeFromFieldsWithTypes,
   decodeFromJSONField,
   extractType,
+  fieldToJSON,
   Reified,
   toBcs,
   ToField,
+  ToJSON,
   ToTypeArgument,
   ToTypeStr,
   TypeArgument,
   VectorClass,
   VectorClassReified,
-  fieldToJSON,
 } from "./reified";
 import { composeSuiType, FieldsWithTypes } from "./util";
 
 export type VectorElements<T extends TypeArgument> = Array<ToField<T>>;
 
 export type VectorReified<T extends TypeArgument> = VectorClassReified<Vector<T>, VectorElements<T>>;
+
+export type VectorJSONField<T extends TypeArgument> = ToJSON<T>[];
+
+export type VectorJSON<T extends TypeArgument> = {
+  $typeName: "vector";
+  $typeArgs: [ToTypeStr<T>];
+  elements: VectorJSONField<T>;
+};
 
 export class Vector<T extends TypeArgument> implements VectorClass {
   __VectorClass = true as const;
@@ -63,11 +71,11 @@ export class Vector<T extends TypeArgument> implements VectorClass {
     };
   }
 
-  static get r() {
+  static get r(): typeof Vector.reified {
     return Vector.reified;
   }
 
-  static get bcs() {
+  static get bcs(): typeof bcs.vector {
     return bcs.vector;
   }
 
@@ -88,11 +96,11 @@ export class Vector<T extends TypeArgument> implements VectorClass {
     return Vector.fromFields(typeArg, Vector.bcs(toBcs(typeArg)).parse(data));
   }
 
-  toJSONField() {
+  toJSONField(): VectorJSONField<T> {
     return this.elements.map((element) => fieldToJSON(this.$typeArgs[0], element));
   }
 
-  toJSON() {
+  toJSON(): VectorJSON<T> {
     return {
       $typeName: this.$typeName,
       $typeArgs: this.$typeArgs,

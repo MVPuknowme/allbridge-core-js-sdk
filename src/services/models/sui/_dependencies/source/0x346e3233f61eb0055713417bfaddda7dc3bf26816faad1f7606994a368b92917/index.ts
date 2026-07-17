@@ -1,4 +1,0 @@
-// @ts-nocheck
-export const PACKAGE_ID = "0x346e3233f61eb0055713417bfaddda7dc3bf26816faad1f7606994a368b92917";
-export const PUBLISHED_AT = "0x346e3233f61eb0055713417bfaddda7dc3bf26816faad1f7606994a368b92917";
-export const PKG_V1 = "0x346e3233f61eb0055713417bfaddda7dc3bf26816faad1f7606994a368b92917";

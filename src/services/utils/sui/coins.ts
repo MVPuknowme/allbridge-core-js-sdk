@@ -1,4 +1,4 @@
-import { CoinStruct } from "@mysten/sui/client";
+import { CoinStruct } from "@mysten/sui/jsonRpc";
 import { Transaction } from "@mysten/sui/transactions";
 
 export function getCoinsWithAmounts(amounts: string[], coins: CoinStruct[], tx: Transaction) {

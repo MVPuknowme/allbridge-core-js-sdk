@@ -1,16 +1,30 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
-import { GenericArg, generic, obj } from "../../_framework/util";
-import { Transaction, TransactionObjectInput } from "@mysten/sui/transactions";
+import { Transaction, TransactionArgument, TransactionObjectInput, TransactionResult } from "@mysten/sui/transactions";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
+import { generic, GenericArg, obj } from "../../_framework/util";
+
+/** Create a new Set. */
+export function new_(tx: Transaction, typeArg: string, options?: { env?: EnvConfig }): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("utils", options?.env)}::set::new`,
+    typeArguments: [typeArg],
+    arguments: [],
+  });
+}
 
 export interface AddArgs {
   set: TransactionObjectInput;
   key: GenericArg;
 }
 
-export function add(tx: Transaction, typeArg: string, args: AddArgs) {
+/**
+ * Add a new element to the set.
+ * Aborts if the element already exists
+ */
+export function add(tx: Transaction, typeArg: string, args: AddArgs, options?: { env?: EnvConfig }): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::set::add`,
+    target: `${getPublishedAt("utils", options?.env)}::set::add`,
     typeArguments: [typeArg],
     arguments: [obj(tx, args.set), generic(tx, `${typeArg}`, args.key)],
   });
@@ -21,19 +35,17 @@ export interface ContainsArgs {
   key: GenericArg;
 }
 
-export function contains(tx: Transaction, typeArg: string, args: ContainsArgs) {
+/** Returns true iff `set` contains an entry for `key`. */
+export function contains(
+  tx: Transaction,
+  typeArg: string,
+  args: ContainsArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::set::contains`,
+    target: `${getPublishedAt("utils", options?.env)}::set::contains`,
     typeArguments: [typeArg],
     arguments: [obj(tx, args.set), generic(tx, `${typeArg}`, args.key)],
-  });
-}
-
-export function destroyEmpty(tx: Transaction, typeArg: string, set: TransactionObjectInput) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::set::destroy_empty`,
-    typeArguments: [typeArg],
-    arguments: [obj(tx, set)],
   });
 }
 
@@ -42,18 +54,28 @@ export interface RemoveArgs {
   key: GenericArg;
 }
 
-export function remove(tx: Transaction, typeArg: string, args: RemoveArgs) {
+export function remove(
+  tx: Transaction,
+  typeArg: string,
+  args: RemoveArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::set::remove`,
+    target: `${getPublishedAt("utils", options?.env)}::set::remove`,
     typeArguments: [typeArg],
     arguments: [obj(tx, args.set), generic(tx, `${typeArg}`, args.key)],
   });
 }
 
-export function new_(tx: Transaction, typeArg: string) {
+export function destroyEmpty(
+  tx: Transaction,
+  typeArg: string,
+  set: TransactionObjectInput,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::set::new`,
+    target: `${getPublishedAt("utils", options?.env)}::set::destroy_empty`,
     typeArguments: [typeArg],
-    arguments: [],
+    arguments: [obj(tx, set)],
   });
 }

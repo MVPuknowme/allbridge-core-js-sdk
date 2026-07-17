@@ -166,7 +166,7 @@ export function tronAddressToEthAddress(address: string): string {
   return TronWebUtils.bytes.byteArray2hexStr(bytes).replace(/^41/, "0x");
 }
 
-function bufferToSize(buffer: Buffer, size: number): Buffer {
+export function bufferToSize(buffer: Buffer, size: number): Buffer {
   if (buffer.length >= size) {
     return buffer;
   }
@@ -321,9 +321,9 @@ export async function prepareTxSendParams(
   txSendParams.toTokenAddress = params.destinationToken.tokenAddress;
 
   txSendParams.gasFeePaymentMethod = params.gasFeePaymentMethod ?? FeePaymentMethod.WITH_NATIVE_CURRENCY;
-  if (txSendParams.gasFeePaymentMethod === FeePaymentMethod.WITH_ARB) {
+  if (txSendParams.gasFeePaymentMethod === FeePaymentMethod.WITH_ABR) {
     if (!params.sourceToken.abrPayer) {
-      throw new SdkError("Source token must contain 'abrPayer' for ARB0 payment method");
+      throw new SdkError("Source token must contain 'abrPayer' for ABR payment method");
     }
   }
 
@@ -352,6 +352,12 @@ export async function prepareTxSendParams(
         throw new OFTDoesNotSupportedError("Such route does not support OFT protocol");
       }
       txSendParams.contractAddress = sourceToken.oftBridgeAddress;
+      break;
+    case Messenger.X_RESERVE:
+      if (!sourceToken.xReserve?.bridgeAddress || !params.destinationToken.xReserve) {
+        throw new SdkError("Such route does not support xReserve protocol");
+      }
+      txSendParams.contractAddress = sourceToken.xReserve.bridgeAddress;
       break;
     case Messenger.ALLBRIDGE:
     case Messenger.WORMHOLE:
@@ -390,9 +396,9 @@ export async function prepareTxSendParams(
       case FeePaymentMethod.WITH_STABLECOIN:
         txSendParams.fee = convertFloatAmountToInt(fee, sourceToken.decimals).toFixed(0);
         break;
-      case FeePaymentMethod.WITH_ARB:
+      case FeePaymentMethod.WITH_ABR:
         if (!sourceToken.abrPayer) {
-          throw new SdkError("Source token must contain 'abrPayer' for ARB0 payment method");
+          throw new SdkError("Source token must contain 'abrPayer' for ABR payment method");
         }
         txSendParams.fee = convertFloatAmountToInt(fee, sourceToken.abrPayer.abrToken.decimals).toFixed(0);
         break;
@@ -425,12 +431,12 @@ export async function prepareTxSendParams(
         extraGasDecimals = sourceToken.decimals;
         extraGasDestRate = Big(extraGasLimits.exchangeRate).div(extraGasLimits.sourceNativeTokenPrice);
         break;
-      case FeePaymentMethod.WITH_ARB:
+      case FeePaymentMethod.WITH_ABR:
         if (!sourceToken.abrPayer) {
-          throw new SdkError("Source token must contain 'abrPayer' for ARB0 payment method");
+          throw new SdkError("Source token must contain 'abrPayer' for ABR payment method");
         }
         if (!extraGasLimits.abrExchangeRate) {
-          throw new SdkError("Cannot transfer WITH_ARB option");
+          throw new SdkError("Cannot transfer WITH_ABR option");
         }
         extraGasDecimals = sourceToken.abrPayer.abrToken.decimals;
         extraGasDestRate = Big(extraGasLimits.exchangeRate).div(extraGasLimits.abrExchangeRate);
@@ -479,9 +485,15 @@ export async function prepareTxSendParams(
     case FeePaymentMethod.WITH_NATIVE_CURRENCY:
       break;
     case FeePaymentMethod.WITH_STABLECOIN:
-      validateAmountEnough(txSendParams.amount, sourceToken.decimals, txSendParams.fee, txSendParams.extraGas);
+      validateAmountEnough(
+        txSendParams.amount,
+        sourceToken.decimals,
+        sourceToken.symbol,
+        txSendParams.fee,
+        txSendParams.extraGas
+      );
       break;
-    case FeePaymentMethod.WITH_ARB: {
+    case FeePaymentMethod.WITH_ABR: {
       const { abrExchangeRate } = await api.getReceiveTransactionCost({
         sourceChainId: txSendParams.fromChainId,
         destinationChainId: txSendParams.toChainId,
@@ -500,6 +512,7 @@ export async function prepareTxSendParams(
 function validateAmountEnough(
   amountInt: BigSource,
   decimals: number,
+  symbol: string,
   feeInt: BigSource,
   extraGasInt: BigSource | undefined
 ) {
@@ -511,7 +524,7 @@ function validateAmountEnough(
       `Amount not enough to pay fee, ${convertIntAmountToFloat(
         Big(amountTotal).minus(1).neg(),
         decimals
-      ).toFixed()} stables is missing`
+      ).toFixed()} ${symbol} is missing`
     );
   }
 }
@@ -562,7 +575,7 @@ export async function getGasFeeOptions(
       Chains.getChainDecimalsByType(sourceChainToken.chainType),
       sourceChainToken.abrPayer.abrToken.decimals
     ).toFixed(0, Big.roundUp);
-    gasFeeOptions[FeePaymentMethod.WITH_ARB] = {
+    gasFeeOptions[FeePaymentMethod.WITH_ABR] = {
       [AmountFormat.INT]: gasFeeIntWithStables,
       [AmountFormat.FLOAT]: convertIntAmountToFloat(
         gasFeeIntWithStables,
@@ -604,6 +617,42 @@ export async function getExtraGasMaxLimits(
     messenger,
     sourceToken: sourceChainToken.tokenAddress,
   });
+
+  const transfer = {
+    [AmountFormat.INT]: destinationChainToken.txCostAmount.transfer,
+    [AmountFormat.FLOAT]: convertIntAmountToFloat(
+      destinationChainToken.txCostAmount.transfer,
+      Chains.getChainDecimalsByType(destinationChainToken.chainType)
+    ).toFixed(),
+  };
+  const swap = {
+    [AmountFormat.INT]: destinationChainToken.txCostAmount.swap,
+    [AmountFormat.FLOAT]: convertIntAmountToFloat(
+      destinationChainToken.txCostAmount.swap,
+      Chains.getChainDecimalsByType(destinationChainToken.chainType)
+    ).toFixed(),
+  };
+
+  if (messenger === Messenger.X_RESERVE) {
+    const getZeroAmountFormatted = () => ({
+      [AmountFormat.INT]: "0",
+      [AmountFormat.FLOAT]: "0",
+    });
+
+    return {
+      extraGasMax: {
+        [FeePaymentMethod.WITH_NATIVE_CURRENCY]: getZeroAmountFormatted(),
+      },
+      destinationChain: {
+        gasAmountMax: getZeroAmountFormatted(),
+        swap: swap,
+        transfer: transfer,
+      },
+      exchangeRate: transactionCostResponse.exchangeRate,
+      sourceNativeTokenPrice: transactionCostResponse.sourceNativeTokenPrice,
+    };
+  }
+
   const maxAmount = destinationChainToken.txCostAmount.maxAmount;
   const maxAmountFloat = convertIntAmountToFloat(
     maxAmount,
@@ -641,7 +690,7 @@ export async function getExtraGasMaxLimits(
     const maxAmountFloatInStable = Big(maxAmountFloatInSourceNative)
       .mul(transactionCostResponse.abrExchangeRate)
       .toFixed(sourceChainToken.abrPayer.abrToken.decimals, Big.roundDown);
-    extraGasMaxLimits[FeePaymentMethod.WITH_ARB] = {
+    extraGasMaxLimits[FeePaymentMethod.WITH_ABR] = {
       [AmountFormat.INT]: convertFloatAmountToInt(
         maxAmountFloatInStable,
         sourceChainToken.abrPayer.abrToken.decimals
@@ -657,20 +706,8 @@ export async function getExtraGasMaxLimits(
         [AmountFormat.INT]: maxAmount,
         [AmountFormat.FLOAT]: maxAmountFloat,
       },
-      swap: {
-        [AmountFormat.INT]: destinationChainToken.txCostAmount.swap,
-        [AmountFormat.FLOAT]: convertIntAmountToFloat(
-          destinationChainToken.txCostAmount.swap,
-          Chains.getChainDecimalsByType(destinationChainToken.chainType)
-        ).toFixed(),
-      },
-      transfer: {
-        [AmountFormat.INT]: destinationChainToken.txCostAmount.transfer,
-        [AmountFormat.FLOAT]: convertIntAmountToFloat(
-          destinationChainToken.txCostAmount.transfer,
-          Chains.getChainDecimalsByType(destinationChainToken.chainType)
-        ).toFixed(),
-      },
+      swap: swap,
+      transfer: transfer,
     },
     exchangeRate: transactionCostResponse.exchangeRate,
     abrExchangeRate: abrAvailable ? transactionCostResponse.abrExchangeRate : undefined,

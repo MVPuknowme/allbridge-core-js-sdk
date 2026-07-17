@@ -142,7 +142,7 @@ export class DefaultTokenService implements TokenService {
         return new SrbTokenService(this.nodeRpcUrlsConfig, this.params, this.api);
       }
       case ChainType.SUI: {
-        return new SuiTokenService(this.nodeRpcUrlsConfig.getNodeRpcUrl(chainSymbol), this.api);
+        return new SuiTokenService(this.nodeRpcUrlsConfig.getNodeRpcUrl(chainSymbol), this.params, this.api);
       }
       case ChainType.ALG: {
         if (provider) {

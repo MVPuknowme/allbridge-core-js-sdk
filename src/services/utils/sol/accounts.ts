@@ -1,7 +1,7 @@
-import * as anchor from "@project-serum/anchor";
+import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
-export async function getAssociatedAccount(publicKey: PublicKey, mintAccount: PublicKey): Promise<PublicKey> {
+export function getAssociatedAccount(publicKey: PublicKey, mintAccount: PublicKey): PublicKey {
   return anchor.utils.token.associatedAddress({
     mint: mintAccount,
     owner: publicKey,
@@ -106,6 +106,14 @@ export async function getCctpBridgeAccount(mintAccount: PublicKey, cctpBridgePro
   const [configPda] = await PublicKey.findProgramAddress(
     [anchor.utils.bytes.utf8.encode("cctp_bridge"), mintAccount.toBytes()],
     cctpBridgeProgramId
+  );
+  return configPda;
+}
+
+export function getCctpV2BridgeConfigAccount(mintAccount: PublicKey, programId: PublicKey): PublicKey {
+  const [configPda] = PublicKey.findProgramAddressSync(
+    [anchor.utils.bytes.utf8.encode("config"), mintAccount.toBytes()],
+    programId
   );
   return configPda;
 }

@@ -253,7 +253,7 @@ export function getChainPoolService(
       return new SrbPoolService(nodeRpcUrlsConfig, params, api);
     }
     case ChainType.SUI: {
-      return new SuiPoolService(nodeRpcUrlsConfig.getNodeRpcUrl(chainSymbol), api);
+      return new SuiPoolService(nodeRpcUrlsConfig.getNodeRpcUrl(chainSymbol), params, api);
     }
     case ChainType.ALG: {
       if (provider) {

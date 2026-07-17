@@ -1,26 +1,30 @@
 // @ts-nocheck
+import { bcs } from "@mysten/sui/bcs";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
+import { getTypeOrigin } from "../../_envs";
 import {
-  PhantomReified,
-  Reified,
-  StructClass,
-  ToField,
-  ToTypeStr,
   decodeFromFields,
   decodeFromFieldsWithTypes,
   decodeFromJSONField,
   phantom,
+  PhantomReified,
+  Reified,
+  StructClass,
+  ToField,
+  ToJSON,
+  ToTypeStr,
 } from "../../_framework/reified";
-import { FieldsWithTypes, composeSuiType, compressSuiType } from "../../_framework/util";
-import { PKG_V1 } from "../index";
-import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { composeSuiType, compressSuiType, FieldsWithTypes } from "../../_framework/util";
 
 /* ============================== MessengerProtocol =============================== */
 
 export function isMessengerProtocol(type: string): boolean {
   type = compressSuiType(type);
-  return type === `${PKG_V1}::messenger_protocol::MessengerProtocol`;
+  return (
+    type === `${getTypeOrigin("utils", "messenger_protocol::MessengerProtocol")}::messenger_protocol::MessengerProtocol`
+  );
 }
 
 export interface MessengerProtocolFields {
@@ -29,45 +33,66 @@ export interface MessengerProtocolFields {
 
 export type MessengerProtocolReified = Reified<MessengerProtocol, MessengerProtocolFields>;
 
+export type MessengerProtocolJSONField = {
+  id: number;
+};
+
+export type MessengerProtocolJSON = {
+  $typeName: typeof MessengerProtocol.$typeName;
+  $typeArgs: [];
+} & MessengerProtocolJSONField;
+
 export class MessengerProtocol implements StructClass {
   __StructClass = true as const;
 
-  static get $typeName() {
-    return `${PKG_V1}::messenger_protocol::MessengerProtocol`;
+  static get $typeName(): `${string}::messenger_protocol::MessengerProtocol` {
+    return `${getTypeOrigin(
+      "utils",
+      "messenger_protocol::MessengerProtocol"
+    )}::messenger_protocol::MessengerProtocol` as const;
   }
   static readonly $numTypeParams = 0;
   static readonly $isPhantom = [] as const;
 
-  readonly $typeName = MessengerProtocol.$typeName;
-  readonly $fullTypeName: string;
+  readonly $typeName: typeof MessengerProtocol.$typeName = MessengerProtocol.$typeName;
+  readonly $fullTypeName: `${string}::messenger_protocol::MessengerProtocol`;
   readonly $typeArgs: [];
-  readonly $isPhantom = MessengerProtocol.$isPhantom;
+  readonly $isPhantom: typeof MessengerProtocol.$isPhantom = MessengerProtocol.$isPhantom;
 
   readonly id: ToField<"u8">;
 
   private constructor(typeArgs: [], fields: MessengerProtocolFields) {
-    this.$fullTypeName = composeSuiType(MessengerProtocol.$typeName, ...typeArgs) as string;
+    this.$fullTypeName = composeSuiType(
+      MessengerProtocol.$typeName,
+      ...typeArgs
+    ) as `${string}::messenger_protocol::MessengerProtocol`;
     this.$typeArgs = typeArgs;
 
     this.id = fields.id;
   }
 
   static reified(): MessengerProtocolReified {
+    const reifiedBcs = MessengerProtocol.bcs;
     return {
-      typeName: MessengerProtocol.$typeName,
-      fullTypeName: composeSuiType(MessengerProtocol.$typeName, ...[]) as string,
+      get typeName() {
+        return MessengerProtocol.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(MessengerProtocol.$typeName, ...[]) as `${string}::messenger_protocol::MessengerProtocol`;
+      },
       typeArgs: [] as [],
       isPhantom: MessengerProtocol.$isPhantom,
       reifiedTypeArgs: [],
       fromFields: (fields: Record<string, any>) => MessengerProtocol.fromFields(fields),
       fromFieldsWithTypes: (item: FieldsWithTypes) => MessengerProtocol.fromFieldsWithTypes(item),
-      fromBcs: (data: Uint8Array) => MessengerProtocol.fromBcs(data),
-      bcs: MessengerProtocol.bcs,
+      fromBcs: (data: Uint8Array) => MessengerProtocol.fromFields(reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
       fromJSONField: (field: any) => MessengerProtocol.fromJSONField(field),
       fromJSON: (json: Record<string, any>) => MessengerProtocol.fromJSON(json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => MessengerProtocol.fromCoreObject(obj),
       fromSuiParsedData: (content: SuiParsedData) => MessengerProtocol.fromSuiParsedData(content),
       fromSuiObjectData: (content: SuiObjectData) => MessengerProtocol.fromSuiObjectData(content),
-      fetch: async (client: SuiClient, id: string) => MessengerProtocol.fetch(client, id),
+      fetch: async (client: ClientWithCoreApi, id: string) => MessengerProtocol.fetch(client, id),
       new: (fields: MessengerProtocolFields) => {
         return new MessengerProtocol([], fields);
       },
@@ -75,21 +100,31 @@ export class MessengerProtocol implements StructClass {
     };
   }
 
-  static get r() {
+  static get r(): MessengerProtocolReified {
     return MessengerProtocol.reified();
   }
 
   static phantom(): PhantomReified<ToTypeStr<MessengerProtocol>> {
     return phantom(MessengerProtocol.reified());
   }
-  static get p() {
+
+  static get p(): PhantomReified<ToTypeStr<MessengerProtocol>> {
     return MessengerProtocol.phantom();
   }
 
-  static get bcs() {
+  private static instantiateBcs() {
     return bcs.struct("MessengerProtocol", {
       id: bcs.u8(),
     });
+  }
+
+  private static cachedBcs: ReturnType<typeof MessengerProtocol.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof MessengerProtocol.instantiateBcs> {
+    if (!MessengerProtocol.cachedBcs) {
+      MessengerProtocol.cachedBcs = MessengerProtocol.instantiateBcs();
+    }
+    return MessengerProtocol.cachedBcs;
   }
 
   static fromFields(fields: Record<string, any>): MessengerProtocol {
@@ -112,18 +147,14 @@ export class MessengerProtocol implements StructClass {
     return MessengerProtocol.fromFields(MessengerProtocol.bcs.parse(data));
   }
 
-  toJSONField() {
+  toJSONField(): MessengerProtocolJSONField {
     return {
       id: this.id,
     };
   }
 
-  toJSON() {
-    return {
-      $typeName: this.$typeName,
-      $typeArgs: this.$typeArgs,
-      ...this.toJSONField(),
-    };
+  toJSON(): MessengerProtocolJSON {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
   }
 
   static fromJSONField(field: any): MessengerProtocol {
@@ -134,12 +165,22 @@ export class MessengerProtocol implements StructClass {
 
   static fromJSON(json: Record<string, any>): MessengerProtocol {
     if (json.$typeName !== MessengerProtocol.$typeName) {
-      throw new Error("not a WithTwoGenerics json object");
+      throw new Error(
+        `not a MessengerProtocol json object: expected '${MessengerProtocol.$typeName}' but got '${json.$typeName}'`
+      );
     }
 
     return MessengerProtocol.fromJSONField(json);
   }
 
+  static fromCoreObject(obj: SuiClientTypes.Object<{ content: true }>): MessengerProtocol {
+    if (!isMessengerProtocol(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a MessengerProtocol object`);
+    }
+    return MessengerProtocol.fromBcs(obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link MessengerProtocol.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiParsedData(content: SuiParsedData): MessengerProtocol {
     if (content.dataType !== "moveObject") {
       throw new Error("not an object");
@@ -150,13 +191,14 @@ export class MessengerProtocol implements StructClass {
     return MessengerProtocol.fromFieldsWithTypes(content);
   }
 
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link MessengerProtocol.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiObjectData(data: SuiObjectData): MessengerProtocol {
     if (data.bcs) {
       if (data.bcs.dataType !== "moveObject" || !isMessengerProtocol(data.bcs.type)) {
         throw new Error(`object at is not a MessengerProtocol object`);
       }
 
-      return MessengerProtocol.fromBcs(fromB64(data.bcs.bcsBytes));
+      return MessengerProtocol.fromBcs(fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return MessengerProtocol.fromSuiParsedData(data.content);
@@ -166,15 +208,14 @@ export class MessengerProtocol implements StructClass {
     );
   }
 
-  static async fetch(client: SuiClient, id: string): Promise<MessengerProtocol> {
-    const res = await client.getObject({ id, options: { showBcs: true } });
-    if (res.error) {
-      throw new Error(`error fetching MessengerProtocol object at id ${id}: ${res.error.code}`);
-    }
-    if (res.data?.bcs?.dataType !== "moveObject" || !isMessengerProtocol(res.data.bcs.type)) {
+  static async fetch(client: ClientWithCoreApi, id: string): Promise<MessengerProtocol> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isMessengerProtocol(object.type)) {
       throw new Error(`object at id ${id} is not a MessengerProtocol object`);
     }
-
-    return MessengerProtocol.fromSuiObjectData(res.data);
+    return MessengerProtocol.fromBcs(object.content);
   }
 }

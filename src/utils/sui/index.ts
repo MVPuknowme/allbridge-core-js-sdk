@@ -1,6 +1,6 @@
 import { Transaction, TransactionResult } from "@mysten/sui/transactions";
 import { AllbridgeCoreClient } from "../../client/core-api/core-client-base";
-import { RawSuiTransaction, SendParams } from "../../index";
+import { AllbridgeCoreSdkOptions, RawSuiTransaction, SendParams } from "../../index";
 import { NodeRpcUrlsConfig } from "../../services";
 import { SuiBridgeService } from "../../services/bridge/sui";
 
@@ -20,6 +20,7 @@ export class DefaultSuiUtils implements SuiUtils {
 
   constructor(
     readonly nodeRpcUrlsConfig: NodeRpcUrlsConfig,
+    readonly params: AllbridgeCoreSdkOptions,
     readonly api: AllbridgeCoreClient
   ) {}
 
@@ -33,7 +34,7 @@ export class DefaultSuiUtils implements SuiUtils {
 
   private get suiBridgeService() {
     if (!this._suiBridgeService) {
-      this._suiBridgeService = new SuiBridgeService(this.nodeRpcUrlsConfig, this.api);
+      this._suiBridgeService = new SuiBridgeService(this.nodeRpcUrlsConfig, this.params, this.api);
     }
     return this._suiBridgeService;
   }

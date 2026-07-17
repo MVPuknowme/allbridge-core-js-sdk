@@ -1,0 +1,610 @@
+// @ts-nocheck
+import { bcs, BcsType } from "@mysten/sui/bcs";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
+import {
+  assertFieldsWithTypesArgsMatch,
+  assertReifiedTypeArgsMatch,
+  decodeFromFields,
+  decodeFromFieldsWithTypes,
+  decodeFromJSONField,
+  extractType,
+  fieldToJSON,
+  phantom,
+  PhantomReified,
+  Reified,
+  StructClass,
+  toBcs,
+  ToField,
+  ToJSON,
+  ToTypeArgument,
+  ToTypeStr,
+  TypeArgument,
+  vector,
+} from "../../../_framework/reified";
+import { composeSuiType, compressSuiType, FieldsWithTypes, parseTypeName } from "../../../_framework/util";
+import { Vector } from "../../../_framework/vector";
+
+/* ============================== VecMap =============================== */
+
+export function isVecMap(type: string): boolean {
+  type = compressSuiType(type);
+  return type.startsWith(`0x2::vec_map::VecMap` + "<");
+}
+
+export interface VecMapFields<K extends TypeArgument, V extends TypeArgument> {
+  contents: ToField<Vector<Entry<K, V>>>;
+}
+
+export type VecMapReified<K extends TypeArgument, V extends TypeArgument> = Reified<VecMap<K, V>, VecMapFields<K, V>>;
+
+export type VecMapJSONField<K extends TypeArgument, V extends TypeArgument> = {
+  contents: ToJSON<Entry<K, V>>[];
+};
+
+export type VecMapJSON<K extends TypeArgument, V extends TypeArgument> = {
+  $typeName: typeof VecMap.$typeName;
+  $typeArgs: [ToTypeStr<K>, ToTypeStr<V>];
+} & VecMapJSONField<K, V>;
+
+/**
+ * A map data structure backed by a vector. The map is guaranteed not to contain duplicate keys, but entries
+ * are *not* sorted by key--entries are included in insertion order.
+ * All operations are O(N) in the size of the map--the intention of this data structure is only to provide
+ * the convenience of programming against a map API.
+ * Large maps should use handwritten parent/child relationships instead.
+ * Maps that need sorted iteration rather than insertion order iteration should also be handwritten.
+ */
+export class VecMap<K extends TypeArgument, V extends TypeArgument> implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::vec_map::VecMap` = `0x2::vec_map::VecMap` as const;
+  static readonly $numTypeParams = 2;
+  static readonly $isPhantom = [false, false] as const;
+
+  readonly $typeName: typeof VecMap.$typeName = VecMap.$typeName;
+  readonly $fullTypeName: `0x2::vec_map::VecMap<${ToTypeStr<K>}, ${ToTypeStr<V>}>`;
+  readonly $typeArgs: [ToTypeStr<K>, ToTypeStr<V>];
+  readonly $isPhantom: typeof VecMap.$isPhantom = VecMap.$isPhantom;
+
+  readonly contents: ToField<Vector<Entry<K, V>>>;
+
+  private constructor(typeArgs: [ToTypeStr<K>, ToTypeStr<V>], fields: VecMapFields<K, V>) {
+    this.$fullTypeName = composeSuiType(
+      VecMap.$typeName,
+      ...typeArgs
+    ) as `0x2::vec_map::VecMap<${ToTypeStr<K>}, ${ToTypeStr<V>}>`;
+    this.$typeArgs = typeArgs;
+
+    this.contents = fields.contents;
+  }
+
+  static reified<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    K: K,
+    V: V
+  ): VecMapReified<ToTypeArgument<K>, ToTypeArgument<V>> {
+    const reifiedBcs = VecMap.bcs(toBcs(K), toBcs(V));
+    return {
+      get typeName() {
+        return VecMap.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(
+          VecMap.$typeName,
+          ...[extractType(K), extractType(V)]
+        ) as `0x2::vec_map::VecMap<${ToTypeStr<ToTypeArgument<K>>}, ${ToTypeStr<ToTypeArgument<V>>}>`;
+      },
+      get typeArgs() {
+        return [extractType(K), extractType(V)] as [ToTypeStr<ToTypeArgument<K>>, ToTypeStr<ToTypeArgument<V>>];
+      },
+      isPhantom: VecMap.$isPhantom,
+      reifiedTypeArgs: [K, V],
+      fromFields: (fields: Record<string, any>) => VecMap.fromFields([K, V], fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => VecMap.fromFieldsWithTypes([K, V], item),
+      fromBcs: (data: Uint8Array) => VecMap.fromFields([K, V], reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => VecMap.fromJSONField([K, V], field),
+      fromJSON: (json: Record<string, any>) => VecMap.fromJSON([K, V], json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => VecMap.fromCoreObject([K, V], obj),
+      fromSuiParsedData: (content: SuiParsedData) => VecMap.fromSuiParsedData([K, V], content),
+      fromSuiObjectData: (content: SuiObjectData) => VecMap.fromSuiObjectData([K, V], content),
+      fetch: async (client: ClientWithCoreApi, id: string) => VecMap.fetch(client, [K, V], id),
+      new: (fields: VecMapFields<ToTypeArgument<K>, ToTypeArgument<V>>) => {
+        return new VecMap([extractType(K), extractType(V)], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): typeof VecMap.reified {
+    return VecMap.reified;
+  }
+
+  static phantom<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    K: K,
+    V: V
+  ): PhantomReified<ToTypeStr<VecMap<ToTypeArgument<K>, ToTypeArgument<V>>>> {
+    return phantom(VecMap.reified(K, V));
+  }
+
+  static get p(): typeof VecMap.phantom {
+    return VecMap.phantom;
+  }
+
+  private static instantiateBcs() {
+    return <K extends BcsType<any>, V extends BcsType<any>>(K: K, V: V) =>
+      bcs.struct(`VecMap<${K.name}, ${V.name}>`, {
+        contents: bcs.vector(Entry.bcs(K, V)),
+      });
+  }
+
+  private static cachedBcs: ReturnType<typeof VecMap.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof VecMap.instantiateBcs> {
+    if (!VecMap.cachedBcs) {
+      VecMap.cachedBcs = VecMap.instantiateBcs();
+    }
+    return VecMap.cachedBcs;
+  }
+
+  static fromFields<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    fields: Record<string, any>
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    return VecMap.reified(typeArgs[0], typeArgs[1]).new({
+      contents: decodeFromFields(vector(Entry.reified(typeArgs[0], typeArgs[1])), fields.contents),
+    });
+  }
+
+  static fromFieldsWithTypes<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    item: FieldsWithTypes
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (!isVecMap(item.type)) {
+      throw new Error("not a VecMap type");
+    }
+    assertFieldsWithTypesArgsMatch(item, typeArgs);
+
+    return VecMap.reified(typeArgs[0], typeArgs[1]).new({
+      contents: decodeFromFieldsWithTypes(vector(Entry.reified(typeArgs[0], typeArgs[1])), item.fields.contents),
+    });
+  }
+
+  static fromBcs<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    data: Uint8Array
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    return VecMap.fromFields(typeArgs, VecMap.bcs(toBcs(typeArgs[0]), toBcs(typeArgs[1])).parse(data));
+  }
+
+  toJSONField(): VecMapJSONField<K, V> {
+    return {
+      contents: fieldToJSON<Vector<Entry<K, V>>>(
+        `vector<${Entry.$typeName}<${this.$typeArgs[0]}, ${this.$typeArgs[1]}>>`,
+        this.contents
+      ),
+    };
+  }
+
+  toJSON(): VecMapJSON<K, V> {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    field: any
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    return VecMap.reified(typeArgs[0], typeArgs[1]).new({
+      contents: decodeFromJSONField(vector(Entry.reified(typeArgs[0], typeArgs[1])), field.contents),
+    });
+  }
+
+  static fromJSON<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    json: Record<string, any>
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (json.$typeName !== VecMap.$typeName) {
+      throw new Error(`not a VecMap json object: expected '${VecMap.$typeName}' but got '${json.$typeName}'`);
+    }
+    assertReifiedTypeArgsMatch(
+      composeSuiType(VecMap.$typeName, ...typeArgs.map(extractType)),
+      json.$typeArgs,
+      typeArgs
+    );
+
+    return VecMap.fromJSONField(typeArgs, json);
+  }
+
+  static fromCoreObject<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    obj: SuiClientTypes.Object<{ content: true }>
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (!isVecMap(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a VecMap object`);
+    }
+
+    const gotTypeArgs = parseTypeName(obj.type).typeArgs;
+    if (gotTypeArgs.length !== 2) {
+      throw new Error(`type argument mismatch: expected 2 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 2; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType(typeArgs[i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return VecMap.fromBcs(typeArgs, obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link VecMap.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    content: SuiParsedData
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isVecMap(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a VecMap object`);
+    }
+    return VecMap.fromFieldsWithTypes(typeArgs, content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link VecMap.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    data: SuiObjectData
+  ): VecMap<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isVecMap(data.bcs.type)) {
+        throw new Error(`object at is not a VecMap object`);
+      }
+
+      const gotTypeArgs = parseTypeName(data.bcs.type).typeArgs;
+      if (gotTypeArgs.length !== 2) {
+        throw new Error(`type argument mismatch: expected 2 type arguments but got '${gotTypeArgs.length}'`);
+      }
+      for (let i = 0; i < 2; i++) {
+        const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+        const expectedTypeArg = compressSuiType(extractType(typeArgs[i]));
+        if (gotTypeArg !== expectedTypeArg) {
+          throw new Error(
+            `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+          );
+        }
+      }
+
+      return VecMap.fromBcs(typeArgs, fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return VecMap.fromSuiParsedData(typeArgs, data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    client: ClientWithCoreApi,
+    typeArgs: [K, V],
+    id: string
+  ): Promise<VecMap<ToTypeArgument<K>, ToTypeArgument<V>>> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isVecMap(object.type)) {
+      throw new Error(`object at id ${id} is not a VecMap object`);
+    }
+
+    const gotTypeArgs = parseTypeName(object.type).typeArgs;
+    if (gotTypeArgs.length !== 2) {
+      throw new Error(`type argument mismatch: expected 2 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 2; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType(typeArgs[i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return VecMap.fromBcs(typeArgs, object.content);
+  }
+}
+
+/* ============================== Entry =============================== */
+
+export function isEntry(type: string): boolean {
+  type = compressSuiType(type);
+  return type.startsWith(`0x2::vec_map::Entry` + "<");
+}
+
+export interface EntryFields<K extends TypeArgument, V extends TypeArgument> {
+  key: ToField<K>;
+  value: ToField<V>;
+}
+
+export type EntryReified<K extends TypeArgument, V extends TypeArgument> = Reified<Entry<K, V>, EntryFields<K, V>>;
+
+export type EntryJSONField<K extends TypeArgument, V extends TypeArgument> = {
+  key: ToJSON<K>;
+  value: ToJSON<V>;
+};
+
+export type EntryJSON<K extends TypeArgument, V extends TypeArgument> = {
+  $typeName: typeof Entry.$typeName;
+  $typeArgs: [ToTypeStr<K>, ToTypeStr<V>];
+} & EntryJSONField<K, V>;
+
+/** An entry in the map */
+export class Entry<K extends TypeArgument, V extends TypeArgument> implements StructClass {
+  __StructClass = true as const;
+
+  static readonly $typeName: `0x2::vec_map::Entry` = `0x2::vec_map::Entry` as const;
+  static readonly $numTypeParams = 2;
+  static readonly $isPhantom = [false, false] as const;
+
+  readonly $typeName: typeof Entry.$typeName = Entry.$typeName;
+  readonly $fullTypeName: `0x2::vec_map::Entry<${ToTypeStr<K>}, ${ToTypeStr<V>}>`;
+  readonly $typeArgs: [ToTypeStr<K>, ToTypeStr<V>];
+  readonly $isPhantom: typeof Entry.$isPhantom = Entry.$isPhantom;
+
+  readonly key: ToField<K>;
+  readonly value: ToField<V>;
+
+  private constructor(typeArgs: [ToTypeStr<K>, ToTypeStr<V>], fields: EntryFields<K, V>) {
+    this.$fullTypeName = composeSuiType(
+      Entry.$typeName,
+      ...typeArgs
+    ) as `0x2::vec_map::Entry<${ToTypeStr<K>}, ${ToTypeStr<V>}>`;
+    this.$typeArgs = typeArgs;
+
+    this.key = fields.key;
+    this.value = fields.value;
+  }
+
+  static reified<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    K: K,
+    V: V
+  ): EntryReified<ToTypeArgument<K>, ToTypeArgument<V>> {
+    const reifiedBcs = Entry.bcs(toBcs(K), toBcs(V));
+    return {
+      get typeName() {
+        return Entry.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(
+          Entry.$typeName,
+          ...[extractType(K), extractType(V)]
+        ) as `0x2::vec_map::Entry<${ToTypeStr<ToTypeArgument<K>>}, ${ToTypeStr<ToTypeArgument<V>>}>`;
+      },
+      get typeArgs() {
+        return [extractType(K), extractType(V)] as [ToTypeStr<ToTypeArgument<K>>, ToTypeStr<ToTypeArgument<V>>];
+      },
+      isPhantom: Entry.$isPhantom,
+      reifiedTypeArgs: [K, V],
+      fromFields: (fields: Record<string, any>) => Entry.fromFields([K, V], fields),
+      fromFieldsWithTypes: (item: FieldsWithTypes) => Entry.fromFieldsWithTypes([K, V], item),
+      fromBcs: (data: Uint8Array) => Entry.fromFields([K, V], reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
+      fromJSONField: (field: any) => Entry.fromJSONField([K, V], field),
+      fromJSON: (json: Record<string, any>) => Entry.fromJSON([K, V], json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => Entry.fromCoreObject([K, V], obj),
+      fromSuiParsedData: (content: SuiParsedData) => Entry.fromSuiParsedData([K, V], content),
+      fromSuiObjectData: (content: SuiObjectData) => Entry.fromSuiObjectData([K, V], content),
+      fetch: async (client: ClientWithCoreApi, id: string) => Entry.fetch(client, [K, V], id),
+      new: (fields: EntryFields<ToTypeArgument<K>, ToTypeArgument<V>>) => {
+        return new Entry([extractType(K), extractType(V)], fields);
+      },
+      kind: "StructClassReified",
+    };
+  }
+
+  static get r(): typeof Entry.reified {
+    return Entry.reified;
+  }
+
+  static phantom<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    K: K,
+    V: V
+  ): PhantomReified<ToTypeStr<Entry<ToTypeArgument<K>, ToTypeArgument<V>>>> {
+    return phantom(Entry.reified(K, V));
+  }
+
+  static get p(): typeof Entry.phantom {
+    return Entry.phantom;
+  }
+
+  private static instantiateBcs() {
+    return <K extends BcsType<any>, V extends BcsType<any>>(K: K, V: V) =>
+      bcs.struct(`Entry<${K.name}, ${V.name}>`, {
+        key: K,
+        value: V,
+      });
+  }
+
+  private static cachedBcs: ReturnType<typeof Entry.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof Entry.instantiateBcs> {
+    if (!Entry.cachedBcs) {
+      Entry.cachedBcs = Entry.instantiateBcs();
+    }
+    return Entry.cachedBcs;
+  }
+
+  static fromFields<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    fields: Record<string, any>
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    return Entry.reified(typeArgs[0], typeArgs[1]).new({
+      key: decodeFromFields(typeArgs[0], fields.key),
+      value: decodeFromFields(typeArgs[1], fields.value),
+    });
+  }
+
+  static fromFieldsWithTypes<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    item: FieldsWithTypes
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (!isEntry(item.type)) {
+      throw new Error("not a Entry type");
+    }
+    assertFieldsWithTypesArgsMatch(item, typeArgs);
+
+    return Entry.reified(typeArgs[0], typeArgs[1]).new({
+      key: decodeFromFieldsWithTypes(typeArgs[0], item.fields.key),
+      value: decodeFromFieldsWithTypes(typeArgs[1], item.fields.value),
+    });
+  }
+
+  static fromBcs<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    data: Uint8Array
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    return Entry.fromFields(typeArgs, Entry.bcs(toBcs(typeArgs[0]), toBcs(typeArgs[1])).parse(data));
+  }
+
+  toJSONField(): EntryJSONField<K, V> {
+    return {
+      key: fieldToJSON<K>(`${this.$typeArgs[0]}`, this.key),
+      value: fieldToJSON<V>(`${this.$typeArgs[1]}`, this.value),
+    };
+  }
+
+  toJSON(): EntryJSON<K, V> {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
+  }
+
+  static fromJSONField<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    field: any
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    return Entry.reified(typeArgs[0], typeArgs[1]).new({
+      key: decodeFromJSONField(typeArgs[0], field.key),
+      value: decodeFromJSONField(typeArgs[1], field.value),
+    });
+  }
+
+  static fromJSON<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    json: Record<string, any>
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (json.$typeName !== Entry.$typeName) {
+      throw new Error(`not a Entry json object: expected '${Entry.$typeName}' but got '${json.$typeName}'`);
+    }
+    assertReifiedTypeArgsMatch(composeSuiType(Entry.$typeName, ...typeArgs.map(extractType)), json.$typeArgs, typeArgs);
+
+    return Entry.fromJSONField(typeArgs, json);
+  }
+
+  static fromCoreObject<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    obj: SuiClientTypes.Object<{ content: true }>
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (!isEntry(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a Entry object`);
+    }
+
+    const gotTypeArgs = parseTypeName(obj.type).typeArgs;
+    if (gotTypeArgs.length !== 2) {
+      throw new Error(`type argument mismatch: expected 2 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 2; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType(typeArgs[i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return Entry.fromBcs(typeArgs, obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link Entry.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiParsedData<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    content: SuiParsedData
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (content.dataType !== "moveObject") {
+      throw new Error("not an object");
+    }
+    if (!isEntry(content.type)) {
+      throw new Error(`object at ${(content.fields as any).id} is not a Entry object`);
+    }
+    return Entry.fromFieldsWithTypes(typeArgs, content);
+  }
+
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link Entry.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
+  static fromSuiObjectData<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    typeArgs: [K, V],
+    data: SuiObjectData
+  ): Entry<ToTypeArgument<K>, ToTypeArgument<V>> {
+    if (data.bcs) {
+      if (data.bcs.dataType !== "moveObject" || !isEntry(data.bcs.type)) {
+        throw new Error(`object at is not a Entry object`);
+      }
+
+      const gotTypeArgs = parseTypeName(data.bcs.type).typeArgs;
+      if (gotTypeArgs.length !== 2) {
+        throw new Error(`type argument mismatch: expected 2 type arguments but got '${gotTypeArgs.length}'`);
+      }
+      for (let i = 0; i < 2; i++) {
+        const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+        const expectedTypeArg = compressSuiType(extractType(typeArgs[i]));
+        if (gotTypeArg !== expectedTypeArg) {
+          throw new Error(
+            `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+          );
+        }
+      }
+
+      return Entry.fromBcs(typeArgs, fromBase64(data.bcs.bcsBytes));
+    }
+    if (data.content) {
+      return Entry.fromSuiParsedData(typeArgs, data.content);
+    }
+    throw new Error(
+      "Both `bcs` and `content` fields are missing from the data. Include `showBcs` or `showContent` in the request."
+    );
+  }
+
+  static async fetch<K extends Reified<TypeArgument, any>, V extends Reified<TypeArgument, any>>(
+    client: ClientWithCoreApi,
+    typeArgs: [K, V],
+    id: string
+  ): Promise<Entry<ToTypeArgument<K>, ToTypeArgument<V>>> {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isEntry(object.type)) {
+      throw new Error(`object at id ${id} is not a Entry object`);
+    }
+
+    const gotTypeArgs = parseTypeName(object.type).typeArgs;
+    if (gotTypeArgs.length !== 2) {
+      throw new Error(`type argument mismatch: expected 2 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 2; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType(typeArgs[i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return Entry.fromBcs(typeArgs, object.content);
+  }
+}

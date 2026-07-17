@@ -95,6 +95,12 @@ export default [
         },
       ],
 
+      // Newly added to eslint:recommended in ESLint v10; not part of this
+      // project's intended ruleset and produces false positives on exported
+      // consts and intentional undefined test fixtures.
+      "no-unassigned-vars": "off",
+      "no-useless-assignment": "off",
+
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-return": "off",

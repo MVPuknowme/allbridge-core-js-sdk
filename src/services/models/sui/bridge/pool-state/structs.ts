@@ -1,13 +1,10 @@
 // @ts-nocheck
+import { bcs } from "@mysten/sui/bcs";
+import type { ClientWithCoreApi, SuiClientTypes } from "@mysten/sui/client";
+import type { SuiObjectData, SuiParsedData } from "@mysten/sui/jsonRpc";
+import { fromBase64 } from "@mysten/sui/utils";
+import { getTypeOrigin } from "../../_envs";
 import {
-  PhantomReified,
-  PhantomToTypeStr,
-  PhantomTypeArgument,
-  Reified,
-  StructClass,
-  ToField,
-  ToPhantomTypeArgument,
-  ToTypeStr,
   assertFieldsWithTypesArgsMatch,
   assertReifiedTypeArgsMatch,
   decodeFromFields,
@@ -15,18 +12,23 @@ import {
   decodeFromJSONField,
   extractType,
   phantom,
+  PhantomReified,
+  PhantomToTypeStr,
+  PhantomTypeArgument,
+  Reified,
+  StructClass,
+  ToField,
+  ToJSON,
+  ToPhantomTypeArgument,
+  ToTypeStr,
 } from "../../_framework/reified";
-import { FieldsWithTypes, composeSuiType, compressSuiType, parseTypeName } from "../../_framework/util";
-import { PKG_V1 } from "../index";
-import { bcs } from "@mysten/sui/bcs";
-import { SuiClient, SuiObjectData, SuiParsedData } from "@mysten/sui/client";
-import { fromB64 } from "@mysten/sui/utils";
+import { composeSuiType, compressSuiType, FieldsWithTypes, parseTypeName } from "../../_framework/util";
 
 /* ============================== PoolState =============================== */
 
 export function isPoolState(type: string): boolean {
   type = compressSuiType(type);
-  return type.startsWith(`${PKG_V1}::pool_state::PoolState` + "<");
+  return type.startsWith(`${getTypeOrigin("bridge", "pool_state::PoolState")}::pool_state::PoolState` + "<");
 }
 
 export interface PoolStateFields<T extends PhantomTypeArgument> {
@@ -39,19 +41,32 @@ export interface PoolStateFields<T extends PhantomTypeArgument> {
 
 export type PoolStateReified<T extends PhantomTypeArgument> = Reified<PoolState<T>, PoolStateFields<T>>;
 
+export type PoolStateJSONField<T extends PhantomTypeArgument> = {
+  tokenBalance: string;
+  vusdBalance: string;
+  d: string;
+  a: string;
+  balanceRatioMinBp: string;
+};
+
+export type PoolStateJSON<T extends PhantomTypeArgument> = {
+  $typeName: typeof PoolState.$typeName;
+  $typeArgs: [PhantomToTypeStr<T>];
+} & PoolStateJSONField<T>;
+
 export class PoolState<T extends PhantomTypeArgument> implements StructClass {
   __StructClass = true as const;
 
-  static get $typeName() {
-    return `${PKG_V1}::pool_state::PoolState`;
+  static get $typeName(): `${string}::pool_state::PoolState` {
+    return `${getTypeOrigin("bridge", "pool_state::PoolState")}::pool_state::PoolState` as const;
   }
   static readonly $numTypeParams = 1;
   static readonly $isPhantom = [true] as const;
 
-  readonly $typeName = PoolState.$typeName;
-  readonly $fullTypeName: string;
+  readonly $typeName: typeof PoolState.$typeName = PoolState.$typeName;
+  readonly $fullTypeName: `${string}::pool_state::PoolState<${PhantomToTypeStr<T>}>`;
   readonly $typeArgs: [PhantomToTypeStr<T>];
-  readonly $isPhantom = PoolState.$isPhantom;
+  readonly $isPhantom: typeof PoolState.$isPhantom = PoolState.$isPhantom;
 
   readonly tokenBalance: ToField<"u64">;
   readonly vusdBalance: ToField<"u64">;
@@ -60,7 +75,10 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
   readonly balanceRatioMinBp: ToField<"u64">;
 
   private constructor(typeArgs: [PhantomToTypeStr<T>], fields: PoolStateFields<T>) {
-    this.$fullTypeName = composeSuiType(PoolState.$typeName, ...typeArgs) as string;
+    this.$fullTypeName = composeSuiType(
+      PoolState.$typeName,
+      ...typeArgs
+    ) as `${string}::pool_state::PoolState<${PhantomToTypeStr<T>}>`;
     this.$typeArgs = typeArgs;
 
     this.tokenBalance = fields.tokenBalance;
@@ -71,21 +89,32 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
   }
 
   static reified<T extends PhantomReified<PhantomTypeArgument>>(T: T): PoolStateReified<ToPhantomTypeArgument<T>> {
+    const reifiedBcs = PoolState.bcs;
     return {
-      typeName: PoolState.$typeName,
-      fullTypeName: composeSuiType(PoolState.$typeName, ...[extractType(T)]) as string,
-      typeArgs: [extractType(T)] as [PhantomToTypeStr<ToPhantomTypeArgument<T>>],
+      get typeName() {
+        return PoolState.$typeName;
+      },
+      get fullTypeName() {
+        return composeSuiType(
+          PoolState.$typeName,
+          ...[extractType(T)]
+        ) as `${string}::pool_state::PoolState<${PhantomToTypeStr<ToPhantomTypeArgument<T>>}>`;
+      },
+      get typeArgs() {
+        return [extractType(T)] as [PhantomToTypeStr<ToPhantomTypeArgument<T>>];
+      },
       isPhantom: PoolState.$isPhantom,
       reifiedTypeArgs: [T],
       fromFields: (fields: Record<string, any>) => PoolState.fromFields(T, fields),
       fromFieldsWithTypes: (item: FieldsWithTypes) => PoolState.fromFieldsWithTypes(T, item),
-      fromBcs: (data: Uint8Array) => PoolState.fromBcs(T, data),
-      bcs: PoolState.bcs,
+      fromBcs: (data: Uint8Array) => PoolState.fromFields(T, reifiedBcs.parse(data)),
+      bcs: reifiedBcs,
       fromJSONField: (field: any) => PoolState.fromJSONField(T, field),
       fromJSON: (json: Record<string, any>) => PoolState.fromJSON(T, json),
+      fromCoreObject: (obj: SuiClientTypes.Object<{ content: true }>) => PoolState.fromCoreObject(T, obj),
       fromSuiParsedData: (content: SuiParsedData) => PoolState.fromSuiParsedData(T, content),
       fromSuiObjectData: (content: SuiObjectData) => PoolState.fromSuiObjectData(T, content),
-      fetch: async (client: SuiClient, id: string) => PoolState.fetch(client, T, id),
+      fetch: async (client: ClientWithCoreApi, id: string) => PoolState.fetch(client, T, id),
       new: (fields: PoolStateFields<ToPhantomTypeArgument<T>>) => {
         return new PoolState([extractType(T)], fields);
       },
@@ -93,7 +122,7 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
     };
   }
 
-  static get r() {
+  static get r(): typeof PoolState.reified {
     return PoolState.reified;
   }
 
@@ -102,11 +131,12 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
   ): PhantomReified<ToTypeStr<PoolState<ToPhantomTypeArgument<T>>>> {
     return phantom(PoolState.reified(T));
   }
-  static get p() {
+
+  static get p(): typeof PoolState.phantom {
     return PoolState.phantom;
   }
 
-  static get bcs() {
+  private static instantiateBcs() {
     return bcs.struct("PoolState", {
       token_balance: bcs.u64(),
       vusd_balance: bcs.u64(),
@@ -114,6 +144,15 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
       a: bcs.u64(),
       balance_ratio_min_bp: bcs.u64(),
     });
+  }
+
+  private static cachedBcs: ReturnType<typeof PoolState.instantiateBcs> | null = null;
+
+  static get bcs(): ReturnType<typeof PoolState.instantiateBcs> {
+    if (!PoolState.cachedBcs) {
+      PoolState.cachedBcs = PoolState.instantiateBcs();
+    }
+    return PoolState.cachedBcs;
   }
 
   static fromFields<T extends PhantomReified<PhantomTypeArgument>>(
@@ -154,7 +193,7 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
     return PoolState.fromFields(typeArg, PoolState.bcs.parse(data));
   }
 
-  toJSONField() {
+  toJSONField(): PoolStateJSONField<T> {
     return {
       tokenBalance: this.tokenBalance.toString(),
       vusdBalance: this.vusdBalance.toString(),
@@ -164,12 +203,8 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
     };
   }
 
-  toJSON() {
-    return {
-      $typeName: this.$typeName,
-      $typeArgs: this.$typeArgs,
-      ...this.toJSONField(),
-    };
+  toJSON(): PoolStateJSON<T> {
+    return { $typeName: this.$typeName, $typeArgs: this.$typeArgs, ...this.toJSONField() };
   }
 
   static fromJSONField<T extends PhantomReified<PhantomTypeArgument>>(
@@ -190,13 +225,41 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
     json: Record<string, any>
   ): PoolState<ToPhantomTypeArgument<T>> {
     if (json.$typeName !== PoolState.$typeName) {
-      throw new Error("not a WithTwoGenerics json object");
+      throw new Error(`not a PoolState json object: expected '${PoolState.$typeName}' but got '${json.$typeName}'`);
     }
-    assertReifiedTypeArgsMatch(composeSuiType(PoolState.$typeName, extractType(typeArg)), json.$typeArgs, [typeArg]);
+    assertReifiedTypeArgsMatch(composeSuiType(PoolState.$typeName, ...[extractType(typeArg)]), json.$typeArgs, [
+      typeArg,
+    ]);
 
     return PoolState.fromJSONField(typeArg, json);
   }
 
+  static fromCoreObject<T extends PhantomReified<PhantomTypeArgument>>(
+    typeArg: T,
+    obj: SuiClientTypes.Object<{ content: true }>
+  ): PoolState<ToPhantomTypeArgument<T>> {
+    if (!isPoolState(obj.type)) {
+      throw new Error(`object at ${obj.objectId} is not a PoolState object`);
+    }
+
+    const gotTypeArgs = parseTypeName(obj.type).typeArgs;
+    if (gotTypeArgs.length !== 1) {
+      throw new Error(`type argument mismatch: expected 1 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 1; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType([typeArg][i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return PoolState.fromBcs(typeArg, obj.content);
+  }
+
+  /** @deprecated `SuiParsedData` is a JSON-RPC-only type that is being phased out upstream. Use {@link PoolState.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiParsedData<T extends PhantomReified<PhantomTypeArgument>>(
     typeArg: T,
     content: SuiParsedData
@@ -210,6 +273,7 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
     return PoolState.fromFieldsWithTypes(typeArg, content);
   }
 
+  /** @deprecated `SuiObjectData` is a JSON-RPC-only type that is being phased out upstream. Use {@link PoolState.fromCoreObject} together with `client.core.getObject({ include: { content: true } })` for transport-agnostic parsing. */
   static fromSuiObjectData<T extends PhantomReified<PhantomTypeArgument>>(
     typeArg: T,
     data: SuiObjectData
@@ -221,15 +285,19 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
 
       const gotTypeArgs = parseTypeName(data.bcs.type).typeArgs;
       if (gotTypeArgs.length !== 1) {
-        throw new Error(`type argument mismatch: expected 1 type argument but got '${gotTypeArgs.length}'`);
+        throw new Error(`type argument mismatch: expected 1 type arguments but got '${gotTypeArgs.length}'`);
       }
-      const gotTypeArg = compressSuiType(gotTypeArgs[0]);
-      const expectedTypeArg = compressSuiType(extractType(typeArg));
-      if (gotTypeArg !== compressSuiType(extractType(typeArg))) {
-        throw new Error(`type argument mismatch: expected '${expectedTypeArg}' but got '${gotTypeArg}'`);
+      for (let i = 0; i < 1; i++) {
+        const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+        const expectedTypeArg = compressSuiType(extractType([typeArg][i]));
+        if (gotTypeArg !== expectedTypeArg) {
+          throw new Error(
+            `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+          );
+        }
       }
 
-      return PoolState.fromBcs(typeArg, fromB64(data.bcs.bcsBytes));
+      return PoolState.fromBcs(typeArg, fromBase64(data.bcs.bcsBytes));
     }
     if (data.content) {
       return PoolState.fromSuiParsedData(typeArg, data.content);
@@ -240,18 +308,32 @@ export class PoolState<T extends PhantomTypeArgument> implements StructClass {
   }
 
   static async fetch<T extends PhantomReified<PhantomTypeArgument>>(
-    client: SuiClient,
+    client: ClientWithCoreApi,
     typeArg: T,
     id: string
   ): Promise<PoolState<ToPhantomTypeArgument<T>>> {
-    const res = await client.getObject({ id, options: { showBcs: true } });
-    if (res.error) {
-      throw new Error(`error fetching PoolState object at id ${id}: ${res.error.code}`);
-    }
-    if (res.data?.bcs?.dataType !== "moveObject" || !isPoolState(res.data.bcs.type)) {
+    const { object } = await client.core.getObject({
+      objectId: id,
+      include: { content: true },
+    });
+    if (!isPoolState(object.type)) {
       throw new Error(`object at id ${id} is not a PoolState object`);
     }
 
-    return PoolState.fromSuiObjectData(typeArg, res.data);
+    const gotTypeArgs = parseTypeName(object.type).typeArgs;
+    if (gotTypeArgs.length !== 1) {
+      throw new Error(`type argument mismatch: expected 1 type arguments but got '${gotTypeArgs.length}'`);
+    }
+    for (let i = 0; i < 1; i++) {
+      const gotTypeArg = compressSuiType(gotTypeArgs[i]);
+      const expectedTypeArg = compressSuiType(extractType([typeArg][i]));
+      if (gotTypeArg !== expectedTypeArg) {
+        throw new Error(
+          `type argument mismatch at position ${i}: expected '${expectedTypeArg}' but got '${gotTypeArg}'`
+        );
+      }
+    }
+
+    return PoolState.fromBcs(typeArg, object.content);
   }
 }

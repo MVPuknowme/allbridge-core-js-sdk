@@ -1,4 +1,4 @@
-import { Big } from "big.js";
+import { Big, BigSource } from "big.js";
 import { Chains } from "../chains";
 import { ApiClientImpl } from "../client/core-api/api-client";
 import { ApiClientCaching } from "../client/core-api/api-client-caching";
@@ -225,7 +225,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async calculateFeePercentOnSourceChain(
-    amountFloat: number | string | Big,
+    amountFloat: BigSource,
     sourceChainToken: TokenWithChainDetails
   ): Promise<number> {
     validateAmountGtZero(amountFloat);
@@ -244,7 +244,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async calculateFeePercentOnDestinationChain(
-    amountFloat: number | string | Big,
+    amountFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): Promise<number> {
@@ -269,7 +269,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceivedAndGasFeeOptions(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -289,7 +289,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSendAndGasFeeOptions(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -309,7 +309,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceived(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -325,7 +325,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceivedFromChain(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger,
@@ -343,7 +343,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToBeReceivedCompute(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger = Messenger.ALLBRIDGE,
@@ -369,13 +369,15 @@ export class AllbridgeCoreSdkService {
           destinationChainToken,
           messenger
         );
+      case Messenger.X_RESERVE:
+        return this.getAmountToBeReceivedComputeXReserve(amountToSendFloat, sourceChainToken, destinationChainToken);
       case Messenger.OFT:
         return this.getAmountToBeReceivedComputeOft(amountToSendFloat, sourceChainToken, destinationChainToken);
     }
   }
 
   getAmountToBeReceivedComputeWithPools(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     sourcePool: PoolInfo,
@@ -390,7 +392,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToBeReceivedComputeCctp(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger.CCTP | Messenger.CCTP_V2
@@ -432,8 +434,36 @@ export class AllbridgeCoreSdkService {
     }
   }
 
+  getAmountToBeReceivedComputeXReserve(
+    amountToSendFloat: BigSource,
+    sourceChainToken: TokenWithChainDetails,
+    destinationChainToken: TokenWithChainDetails
+  ): string {
+    validateAmountGtZero(amountToSendFloat);
+    validateAmountDecimals("amountToSendFloat", amountToSendFloat, sourceChainToken.decimals);
+    const xReserve = this.getXReserveConfig(sourceChainToken, destinationChainToken);
+    const amountToSend = convertFloatAmountToInt(amountToSendFloat, sourceChainToken.decimals);
+
+    const result = amountToSend.mul(Big(1).minus(xReserve.feeShare)).minus(xReserve.feeConst).round(0, Big.roundDown);
+    if (result.lte(0)) {
+      const minAmount = Big(xReserve.feeConst).div(Big(1).minus(xReserve.feeShare));
+      const minAmountFloat = convertIntAmountToFloat(minAmount, sourceChainToken.decimals);
+
+      throw new SdkError(
+        `Amount is too low for xReserve route: amount must be greater than ${minAmountFloat.toFixed(2, Big.roundUp)} ${sourceChainToken.symbol ?? ""}`.trim()
+      );
+    }
+    const resultInDestPrecision = convertAmountPrecision(
+      result,
+      sourceChainToken.decimals,
+      destinationChainToken.decimals
+    ).round(0);
+
+    return convertIntAmountToFloat(resultInDestPrecision, destinationChainToken.decimals).toFixed();
+  }
+
   async getAmountToBeReceivedComputeOft(
-    amountToSendFloat: number | string | Big,
+    amountToSendFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): Promise<string> {
@@ -468,7 +498,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSend(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger
@@ -484,7 +514,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSendFromChain(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger,
@@ -502,7 +532,7 @@ export class AllbridgeCoreSdkService {
   }
 
   async getAmountToSendCompute(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger = Messenger.ALLBRIDGE,
@@ -528,13 +558,15 @@ export class AllbridgeCoreSdkService {
           destinationChainToken,
           messenger
         );
+      case Messenger.X_RESERVE:
+        return this.getAmountToSendComputeXReserve(amountToBeReceivedFloat, sourceChainToken, destinationChainToken);
       case Messenger.OFT:
         return this.getAmountToSendComputeOft(amountToBeReceivedFloat, sourceChainToken, destinationChainToken);
     }
   }
 
   getAmountToSendComputeWithPools(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     sourcePool: PoolInfo,
@@ -553,7 +585,7 @@ export class AllbridgeCoreSdkService {
   }
 
   getAmountToSendComputeCctp(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails,
     messenger: Messenger.CCTP | Messenger.CCTP_V2
@@ -594,8 +626,48 @@ export class AllbridgeCoreSdkService {
     }
   }
 
+  getAmountToSendComputeXReserve(
+    amountToBeReceivedFloat: BigSource,
+    sourceChainToken: TokenWithChainDetails,
+    destinationChainToken: TokenWithChainDetails
+  ): string {
+    validateAmountGtZero(amountToBeReceivedFloat);
+    validateAmountDecimals("amountToBeReceivedFloat", amountToBeReceivedFloat, destinationChainToken.decimals);
+    const xReserve = this.getXReserveConfig(sourceChainToken, destinationChainToken);
+    const amountToBeReceived = convertFloatAmountToInt(amountToBeReceivedFloat, destinationChainToken.decimals);
+
+    const amountInSourcePrecision = convertAmountPrecision(
+      amountToBeReceived,
+      destinationChainToken.decimals,
+      sourceChainToken.decimals
+    ).round(0);
+
+    const result = amountInSourcePrecision
+      .plus(xReserve.feeConst)
+      .div(Big(1).minus(xReserve.feeShare))
+      .round(0, Big.roundUp);
+    if (result.lte(0)) {
+      throw new SdkError("Amount is too low for xReserve route");
+    }
+
+    return convertIntAmountToFloat(result, sourceChainToken.decimals).toFixed();
+  }
+
+  private getXReserveConfig(
+    sourceChainToken: TokenWithChainDetails,
+    destinationChainToken: TokenWithChainDetails
+  ): NonNullable<TokenWithChainDetails["xReserve"]> {
+    if (!sourceChainToken.xReserve || !destinationChainToken.xReserve) {
+      throw new SdkError("Such route does not support xReserve protocol");
+    }
+    if (Big(sourceChainToken.xReserve.feeShare).gte(1)) {
+      throw new SdkError("xReserve feeShare must be less than 1");
+    }
+    return sourceChainToken.xReserve;
+  }
+
   async getAmountToSendComputeOft(
-    amountToBeReceivedFloat: number | string | Big,
+    amountToBeReceivedFloat: BigSource,
     sourceChainToken: TokenWithChainDetails,
     destinationChainToken: TokenWithChainDetails
   ): Promise<string> {

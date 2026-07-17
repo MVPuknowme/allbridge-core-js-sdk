@@ -108,8 +108,8 @@ export class TronBridgeService extends ChainBridgeService {
             value = "0";
             break;
           }
-          case FeePaymentMethod.WITH_ARB:
-            throw new SdkError("TRX bridge does not support ARB0 payment method");
+          case FeePaymentMethod.WITH_ABR:
+            throw new SdkError("TRX bridge does not support ABR payment method");
           default: {
             return assertNever(gasFeePaymentMethod, "Unhandled FeePaymentMethod");
           }
@@ -144,14 +144,16 @@ export class TronBridgeService extends ChainBridgeService {
             value = "0";
             break;
           }
-          case FeePaymentMethod.WITH_ARB:
-            throw new SdkError("TRX bridge does not support ARB0 payment method");
+          case FeePaymentMethod.WITH_ABR:
+            throw new SdkError("TRX bridge does not support ABR payment method");
           default: {
             return assertNever(gasFeePaymentMethod, "Unhandled FeePaymentMethod");
           }
         }
         methodSignature = "bridge(address,uint256,bytes32,uint256,uint256,uint256,uint256)";
         break;
+      case Messenger.X_RESERVE:
+        throw new SdkError("Messenger xReserve is not supported for TRX bridge");
       case Messenger.ALLBRIDGE:
       case Messenger.WORMHOLE:
         switch (gasFeePaymentMethod) {
@@ -183,8 +185,8 @@ export class TronBridgeService extends ChainBridgeService {
             value = "0";
             break;
           }
-          case FeePaymentMethod.WITH_ARB:
-            throw new SdkError("TRX bridge does not support ARB0 payment method");
+          case FeePaymentMethod.WITH_ABR:
+            throw new SdkError("TRX bridge does not support ABR payment method");
           default: {
             return assertNever(gasFeePaymentMethod, "Unhandled FeePaymentMethod");
           }

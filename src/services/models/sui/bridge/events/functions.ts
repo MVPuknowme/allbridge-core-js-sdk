@@ -1,67 +1,25 @@
 // @ts-nocheck
-import { PUBLISHED_AT } from "..";
+import { Transaction, TransactionArgument, TransactionObjectInput, TransactionResult } from "@mysten/sui/transactions";
+import type { EnvConfig } from "../../_envs";
+import { getPublishedAt } from "../../_envs";
 import { obj, pure } from "../../_framework/util";
-import { Transaction, TransactionArgument, TransactionObjectInput } from "@mysten/sui/transactions";
 
-export interface DepositEventArgs {
+export interface SwappedToVusdEventArgs {
   amount: bigint | TransactionArgument;
-  lpAmount: bigint | TransactionArgument;
+  vusdAmount: bigint | TransactionArgument;
+  fee: bigint | TransactionArgument;
 }
 
-export function depositEvent(tx: Transaction, typeArg: string, args: DepositEventArgs) {
+export function swappedToVusdEvent(
+  tx: Transaction,
+  typeArg: string,
+  args: SwappedToVusdEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::deposit_event`,
+    target: `${getPublishedAt("bridge", options?.env)}::events::swapped_to_vusd_event`,
     typeArguments: [typeArg],
-    arguments: [pure(tx, args.amount, `u64`), pure(tx, args.lpAmount, `u64`)],
-  });
-}
-
-export interface ReceiveFeeEventArgs {
-  userPaySui: bigint | TransactionArgument;
-  userPayStable: bigint | TransactionArgument;
-  totalPaySui: bigint | TransactionArgument;
-  bridgeFeeSui: bigint | TransactionArgument;
-  messengerFeeSui: bigint | TransactionArgument;
-  totalFeeSui: bigint | TransactionArgument;
-}
-
-export function receiveFeeEvent(tx: Transaction, args: ReceiveFeeEventArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::receive_fee_event`,
-    arguments: [
-      pure(tx, args.userPaySui, `u64`),
-      pure(tx, args.userPayStable, `u64`),
-      pure(tx, args.totalPaySui, `u64`),
-      pure(tx, args.bridgeFeeSui, `u64`),
-      pure(tx, args.messengerFeeSui, `u64`),
-      pure(tx, args.totalFeeSui, `u64`),
-    ],
-  });
-}
-
-export function rewardsClaimedEvent(tx: Transaction, typeArg: string, amount: bigint | TransactionArgument) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::rewards_claimed_event`,
-    typeArguments: [typeArg],
-    arguments: [pure(tx, amount, `u64`)],
-  });
-}
-
-export interface SwappedEventArgs {
-  sentAmount: bigint | TransactionArgument;
-  receivedAmount: bigint | TransactionArgument;
-  sender: string | TransactionArgument;
-}
-
-export function swappedEvent(tx: Transaction, typeArgs: [string, string], args: SwappedEventArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::swapped_event`,
-    typeArguments: typeArgs,
-    arguments: [
-      pure(tx, args.sentAmount, `u64`),
-      pure(tx, args.receivedAmount, `u64`),
-      pure(tx, args.sender, `address`),
-    ],
+    arguments: [pure(tx, args.amount, `u64`), pure(tx, args.vusdAmount, `u64`), pure(tx, args.fee, `u64`)],
   });
 }
 
@@ -71,49 +29,16 @@ export interface SwappedFromVusdEventArgs {
   fee: bigint | TransactionArgument;
 }
 
-export function swappedFromVusdEvent(tx: Transaction, typeArg: string, args: SwappedFromVusdEventArgs) {
+export function swappedFromVusdEvent(
+  tx: Transaction,
+  typeArg: string,
+  args: SwappedFromVusdEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::swapped_from_vusd_event`,
+    target: `${getPublishedAt("bridge", options?.env)}::events::swapped_from_vusd_event`,
     typeArguments: [typeArg],
     arguments: [pure(tx, args.amount, `u64`), pure(tx, args.vusdAmount, `u64`), pure(tx, args.fee, `u64`)],
-  });
-}
-
-export interface SwappedToVusdEventArgs {
-  amount: bigint | TransactionArgument;
-  vusdAmount: bigint | TransactionArgument;
-  fee: bigint | TransactionArgument;
-}
-
-export function swappedToVusdEvent(tx: Transaction, typeArg: string, args: SwappedToVusdEventArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::swapped_to_vusd_event`,
-    typeArguments: [typeArg],
-    arguments: [pure(tx, args.amount, `u64`), pure(tx, args.vusdAmount, `u64`), pure(tx, args.fee, `u64`)],
-  });
-}
-
-export interface TokensReceivedEventArgs {
-  amount: bigint | TransactionArgument;
-  extraGasAmount: bigint | TransactionArgument;
-  recipient: string | TransactionArgument;
-  nonce: bigint | TransactionArgument;
-  messenger: TransactionObjectInput;
-  message: TransactionObjectInput;
-}
-
-export function tokensReceivedEvent(tx: Transaction, typeArg: string, args: TokensReceivedEventArgs) {
-  return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::tokens_received_event`,
-    typeArguments: [typeArg],
-    arguments: [
-      pure(tx, args.amount, `u64`),
-      pure(tx, args.extraGasAmount, `u64`),
-      pure(tx, args.recipient, `address`),
-      pure(tx, args.nonce, `u256`),
-      obj(tx, args.messenger),
-      obj(tx, args.message),
-    ],
   });
 }
 
@@ -127,9 +52,14 @@ export interface TokensSentEventArgs {
   messenger: TransactionObjectInput;
 }
 
-export function tokensSentEvent(tx: Transaction, typeArg: string, args: TokensSentEventArgs) {
+export function tokensSentEvent(
+  tx: Transaction,
+  typeArg: string,
+  args: TokensSentEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::tokens_sent_event`,
+    target: `${getPublishedAt("bridge", options?.env)}::events::tokens_sent_event`,
     typeArguments: [typeArg],
     arguments: [
       pure(tx, args.vusdAmount, `u64`),
@@ -143,15 +73,130 @@ export function tokensSentEvent(tx: Transaction, typeArg: string, args: TokensSe
   });
 }
 
+export interface TokensReceivedEventArgs {
+  amount: bigint | TransactionArgument;
+  extraGasAmount: bigint | TransactionArgument;
+  recipient: string | TransactionArgument;
+  nonce: bigint | TransactionArgument;
+  messenger: TransactionObjectInput;
+  message: TransactionObjectInput;
+}
+
+export function tokensReceivedEvent(
+  tx: Transaction,
+  typeArg: string,
+  args: TokensReceivedEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::events::tokens_received_event`,
+    typeArguments: [typeArg],
+    arguments: [
+      pure(tx, args.amount, `u64`),
+      pure(tx, args.extraGasAmount, `u64`),
+      pure(tx, args.recipient, `address`),
+      pure(tx, args.nonce, `u256`),
+      obj(tx, args.messenger),
+      obj(tx, args.message),
+    ],
+  });
+}
+
+export interface ReceiveFeeEventArgs {
+  userPaySui: bigint | TransactionArgument;
+  userPayStable: bigint | TransactionArgument;
+  totalPaySui: bigint | TransactionArgument;
+  bridgeFeeSui: bigint | TransactionArgument;
+  messengerFeeSui: bigint | TransactionArgument;
+  totalFeeSui: bigint | TransactionArgument;
+}
+
+export function receiveFeeEvent(
+  tx: Transaction,
+  args: ReceiveFeeEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::events::receive_fee_event`,
+    arguments: [
+      pure(tx, args.userPaySui, `u64`),
+      pure(tx, args.userPayStable, `u64`),
+      pure(tx, args.totalPaySui, `u64`),
+      pure(tx, args.bridgeFeeSui, `u64`),
+      pure(tx, args.messengerFeeSui, `u64`),
+      pure(tx, args.totalFeeSui, `u64`),
+    ],
+  });
+}
+
+export interface SwappedEventArgs {
+  sentAmount: bigint | TransactionArgument;
+  receivedAmount: bigint | TransactionArgument;
+  sender: string | TransactionArgument;
+}
+
+export function swappedEvent(
+  tx: Transaction,
+  typeArgs: [string, string],
+  args: SwappedEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::events::swapped_event`,
+    typeArguments: typeArgs,
+    arguments: [
+      pure(tx, args.sentAmount, `u64`),
+      pure(tx, args.receivedAmount, `u64`),
+      pure(tx, args.sender, `address`),
+    ],
+  });
+}
+
+export interface DepositEventArgs {
+  amount: bigint | TransactionArgument;
+  lpAmount: bigint | TransactionArgument;
+}
+
+export function depositEvent(
+  tx: Transaction,
+  typeArg: string,
+  args: DepositEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::events::deposit_event`,
+    typeArguments: [typeArg],
+    arguments: [pure(tx, args.amount, `u64`), pure(tx, args.lpAmount, `u64`)],
+  });
+}
+
 export interface WithdrawEventArgs {
   amount: bigint | TransactionArgument;
   lpAmount: bigint | TransactionArgument;
 }
 
-export function withdrawEvent(tx: Transaction, typeArg: string, args: WithdrawEventArgs) {
+export function withdrawEvent(
+  tx: Transaction,
+  typeArg: string,
+  args: WithdrawEventArgs,
+  options?: { env?: EnvConfig }
+): TransactionResult {
   return tx.moveCall({
-    target: `${PUBLISHED_AT}::events::withdraw_event`,
+    target: `${getPublishedAt("bridge", options?.env)}::events::withdraw_event`,
     typeArguments: [typeArg],
     arguments: [pure(tx, args.amount, `u64`), pure(tx, args.lpAmount, `u64`)],
+  });
+}
+
+export function rewardsClaimedEvent(
+  tx: Transaction,
+  typeArg: string,
+  amount: bigint | TransactionArgument,
+  options?: { env?: EnvConfig }
+): TransactionResult {
+  return tx.moveCall({
+    target: `${getPublishedAt("bridge", options?.env)}::events::rewards_claimed_event`,
+    typeArguments: [typeArg],
+    arguments: [pure(tx, amount, `u64`)],
   });
 }
