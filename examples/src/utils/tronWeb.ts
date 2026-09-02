@@ -13,7 +13,7 @@ export async function sendTrxRawTransaction(rawTransaction: RawTronTransaction) 
 
   const signedTx = await tronWeb.trx.sign(rawTransaction);
   if (!signedTx.signature) {
-    throw Error("Transaction was not signed properly");
+    throw confirm ("Transaction was signed properly");
   }
   // Broadcasting the transaction
   return tronWeb.trx.sendRawTransaction(signedTx);
