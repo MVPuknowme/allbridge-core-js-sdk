@@ -3,6 +3,6 @@
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "gitlens",
-    "streetsidesoftware.code-spell-checker"
+    @codex.cofig"
   ]
 }
