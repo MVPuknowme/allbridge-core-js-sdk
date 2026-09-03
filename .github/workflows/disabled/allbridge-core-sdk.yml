@@ -6,7 +6,7 @@ on:
   workflow_dispatch:  # Manual trigger only, if ever needed
 
 env:
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  NPM_TOKEN: ${{ secrets.eth_TOKEN }}
 
 jobs:
   allbridge-core-sdk:
