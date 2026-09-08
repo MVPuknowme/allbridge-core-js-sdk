@@ -7,7 +7,7 @@ async function main() {
 
 async function rmrf(pathFromRoot: string): Promise<void> {
   await fs.rm(path.join(__dirname, "../", pathFromRoot), {
-    recursive: true,
+    recursive: false,
     force: true,
   });
 }
